@@ -1,0 +1,42 @@
+id: acp-complete-creates-order
+title: Completing a ready session creates exactly one order and returns completed state
+purpose: Complete MUST create an order and return status completed with an order object carrying id, checkout_session_id and permalink_url.
+classification: protocol_conformance
+profile: acp-checkout-2026-04-17
+role: agent
+requirement: LAB-ACP-COMP-001
+requires_capabilities: [checkout]
+preconditions: [fixture_reset, result_lookup_supported]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: complete
+    action: complete_checkout
+  - id: get
+    action: get_checkout_session
+assertions:
+  - kind: status
+    step: complete
+    equals: 200
+  - kind: schema
+    step: complete
+    schema: acp:CheckoutSessionWithOrder
+  - kind: field
+    step: complete
+    path: $.status
+    equals: completed
+  - kind: schema
+    step: get
+    schema: acp:CheckoutSession
+  - kind: field
+    step: get
+    path: $.status
+    equals: completed
+  - kind: metric
+    metric: merchant_order_count_for_operation
+    equals: 1
+  - kind: metric
+    metric: settled_charge_count_for_operation
+    equals: 1
+evidence: [redacted_protocol_trace, merchant_order_snapshot, payment_event_snapshot]
+cleanup: reset_fixture

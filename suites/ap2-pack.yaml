@@ -1,0 +1,19 @@
+id: ap2-pack
+version: 0.1.0
+description: All AP2 cases.
+cases:
+- conformance/ap2-autonomous-constraint-violation-rejected.yaml
+- conformance/ap2-autonomous-valid-accepted.yaml
+- conformance/ap2-error-receipt-well-formed.yaml
+- conformance/ap2-expired-open-mandate-rejected.yaml
+- conformance/ap2-mandate-bound-to-other-checkout-rejected.yaml
+- conformance/ap2-missing-disclosure-rejected.yaml
+- conformance/ap2-payment-amount-out-of-range-rejected.yaml
+- conformance/ap2-payment-mandate-valid.yaml
+- conformance/ap2-payment-transaction-mismatch-rejected.yaml
+- conformance/ap2-tampered-content-rejected.yaml
+- conformance/ap2-unknown-constraint-unresolved.yaml
+- conformance/ap2-unknown-issuer-rejected.yaml
+- conformance/ap2-unsupported-algorithm-rejected.yaml
+- conformance/ap2-valid-direct-mandate-accepted.yaml
+- conformance/ap2-wrong-agent-key-rejected.yaml

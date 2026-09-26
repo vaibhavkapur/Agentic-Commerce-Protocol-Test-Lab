@@ -1,0 +1,35 @@
+id: ap2-error-receipt-well-formed
+title: A rejection is returned as a verifier-signed receipt referencing the received presentation
+purpose: Even when the chain is rejected (untrusted issuer), the merchant MUST return a Checkout Receipt JWT with the error, signed by the merchant, whose reference is the hash of the presentation and whose shape matches the pinned receipt schema.
+classification: protocol_conformance
+profile: ap2-mandates-v0.2.0
+role: shopping_agent
+requirement: LAB-AP2-RCPT-001
+requires_capabilities: ["role:merchant", "mandate:mandate.checkout.1"]
+preconditions: [fixture_reset, issuer_ready]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: sign
+    action: obtain_checkout_jwt
+  - id: build
+    action: build_checkout_mandate
+    with: {variant: unknown_issuer}
+    intentionally_invalid: true
+  - id: present
+    action: present_checkout_mandate
+assertions:
+  - kind: verifier
+    step: present
+    result: Error
+  - kind: oracle
+    oracle: ap2_receipt_signature_valid
+    step: present
+  - kind: oracle
+    oracle: ap2_receipt_reference_matches
+    step: present
+  - kind: oracle
+    oracle: ap2_receipt_schema_valid
+    step: present
+evidence: [redacted_protocol_trace, verifier_decision]
+cleanup: reset_fixture

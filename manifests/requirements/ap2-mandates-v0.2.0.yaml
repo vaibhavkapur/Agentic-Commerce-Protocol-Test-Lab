@@ -1,0 +1,97 @@
+profile: ap2-mandates-v0.2.0
+requirements:
+  - id: LAB-AP2-VER-001
+    kind: normative
+    keyword: MUST
+    source:
+      document: docs/ap2/specification.md
+      section: "Verification › Merchant"
+      quote: "Verify that the hash of the Checkout JWT sent for approval matches the value included for the checkout_hash claim."
+      revision: b4587ac1d055888a73b4b21750973cffba961793
+    statement: The merchant accepts a closed Checkout Mandate only when checkout_hash equals the hash of the disclosed checkout_jwt for the checkout being completed.
+    expected_behavior: Valid direct mandate → receipt Success and one order; hash mismatch or withheld checkout_jwt → receipt Error invalid_credential; mandate bound to a different checkout → receipt Error invalid_mandate; no order created on Error.
+    applicability: Targets in the merchant role.
+
+  - id: LAB-AP2-VER-002
+    kind: normative
+    keyword: MUST
+    source:
+      document: docs/ap2/agent_authorization.md
+      section: "Mandate Structure › Mandates using SD-JWT VCs › Verification and Processing Rules (step 1)"
+      quote: "Verify and process the SD-JWT chain according to Delegate SD-JWT."
+      revision: b4587ac1d055888a73b4b21750973cffba961793
+    statement: A chain whose issuer is untrusted, whose signature does not verify, whose algorithm is outside the profile allowlist, or whose credential has expired is rejected.
+    expected_behavior: receipt Error invalid_credential for tampered content, unknown issuer, unsupported algorithm, and expired mandates.
+    applicability: Targets in the merchant role.
+
+  - id: LAB-AP2-VER-003
+    kind: normative
+    keyword: MUST
+    source:
+      document: docs/ap2/agent_authorization.md
+      section: "Verification and Processing Rules (step 3)"
+      quote: "Any unknown Constraints MUST be treated as failing evaluation."
+      revision: b4587ac1d055888a73b4b21750973cffba961793
+    statement: An open mandate carrying an unrecognised constraint type causes rejection with unresolved_constraint.
+    expected_behavior: receipt Error unresolved_constraint.
+    applicability: Targets accepting open Checkout Mandates.
+
+  - id: LAB-AP2-VER-004
+    kind: normative
+    keyword: MUST
+    source:
+      document: docs/ap2/specification.md; docs/ap2/checkout_mandate.md
+      section: "Verification › Merchant; Constraints › Line Items › Evaluation"
+      quote: "If open Checkout Mandates are included, verify that the closed Checkout conforms to all of the Constraints by evaluating each Constraint."
+      revision: b4587ac1d055888a73b4b21750973cffba961793
+    statement: An authentic agent-signed closed mandate whose checkout violates the user's open-mandate constraints is rejected; one that satisfies them is accepted.
+    expected_behavior: constraint_violation → receipt Error invalid_mandate; valid_autonomous → receipt Success.
+    applicability: Targets accepting open Checkout Mandates.
+
+  - id: LAB-AP2-KEY-001
+    kind: normative
+    keyword: MUST
+    source:
+      document: docs/ap2/specification.md
+      section: "Modes › Autonomous (Human Not Present)"
+      quote: "These MUST include the agent's public key as a cnf claim ... the Shopping Agent MAY now sign it using its Agent Key"
+      revision: b4587ac1d055888a73b4b21750973cffba961793
+    statement: The closed mandate must be signed by the key endorsed in the open mandate's cnf claim.
+    expected_behavior: closed mandate signed by a different agent key → receipt Error invalid_credential.
+    applicability: Targets accepting open Checkout Mandates.
+
+  - id: LAB-AP2-RCPT-001
+    kind: normative
+    keyword: MUST
+    source:
+      document: docs/ap2/specification.md; docs/ap2/agent_authorization.md
+      section: "Verification › Merchant; Action Authorization › Mandate Receipt"
+      quote: "If any step fails, the Merchant MUST return a Checkout Receipt JWT containing the appropriate error message. ... reference: REQUIRED ... hash of the received Mandate"
+      revision: b4587ac1d055888a73b4b21750973cffba961793
+    statement: Every decision is returned as a verifier-signed receipt whose reference is the hash of the received presentation and whose shape matches the pinned receipt schema.
+    expected_behavior: receipt JWT verifies with the merchant key; receipt.reference == hash(presentation); receipt validates against checkout_receipt.json.
+    applicability: Targets in the merchant role.
+
+  - id: LAB-AP2-PAY-001
+    kind: normative
+    keyword: MUST
+    source:
+      document: docs/ap2/specification.md
+      section: "Mandates › Payment Mandate; Verification › Merchant Payment Processor"
+      quote: "The Payment Mandate is bound to a particular Checkout using the cryptographic hash of the Checkout JWT. ... MUST verify the Payment Credential is appropriately scoped to the Checkout."
+      revision: b4587ac1d055888a73b4b21750973cffba961793
+    statement: A Payment Mandate whose transaction_id is not the hash of the checkout being paid for is rejected.
+    expected_behavior: transaction_mismatch → payment receipt Error invalid_mandate; valid → Success.
+    applicability: Targets in the credential-provider role.
+
+  - id: LAB-AP2-PAY-002
+    kind: normative
+    keyword: MUST
+    source:
+      document: docs/ap2/payment_mandate.md
+      section: "Payment Mandate Constraints › Amount Range › Evaluation"
+      quote: "The payment_amount property of the Payment Mandate MUST be within the range defined by min and max."
+      revision: b4587ac1d055888a73b4b21750973cffba961793
+    statement: A closed Payment Mandate exceeding the open mandate's amount_range is rejected.
+    expected_behavior: amount_out_of_range → payment receipt Error invalid_mandate.
+    applicability: Targets accepting open Payment Mandates.

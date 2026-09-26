@@ -1,0 +1,34 @@
+id: ucp-cancel-after-complete
+title: Cancelling a completed checkout returns an error and leaves the order intact (SHOULD)
+purpose: Businesses SHOULD return an error when a completed checkout is cancelled. A FAIL here is a deviation from recommended behaviour, not a MUST violation.
+classification: protocol_conformance
+profile: ucp-checkout-2026-08-25
+role: platform
+requirement: LAB-UCP-CANC-001
+requires_capabilities: [dev.ucp.shopping.checkout]
+preconditions: [fixture_reset, result_lookup_supported]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: complete
+    action: complete_checkout
+  - id: cancel
+    action: cancel_checkout_session
+  - id: get
+    action: get_checkout_session
+assertions:
+  - kind: status
+    step: cancel
+    in: [400, 409]
+  - kind: schema
+    step: cancel
+    schema: ucp:error_response
+  - kind: field
+    step: get
+    path: $.status
+    equals: completed
+  - kind: metric
+    metric: merchant_order_count_for_operation
+    equals: 1
+evidence: [redacted_protocol_trace, merchant_order_snapshot, checkout_snapshot]
+cleanup: reset_fixture

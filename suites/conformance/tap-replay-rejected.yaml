@@ -1,0 +1,24 @@
+id: tap-replay-rejected
+title: Identical signed request replayed within its validity window is rejected
+purpose: Applicable only to gateways advertising replay protection. The first delivery verifies; the byte-identical second delivery must be refused.
+classification: protocol_conformance
+profile: tap-signed-requests-2025-10-28
+role: agent
+requirement: LAB-TAP-RPLY-001
+requires_capabilities: [signed_request_verification, "policy:replay_protection"]
+preconditions: [fixture_reset, registry_ready]
+steps:
+  - id: send
+    action: send_signed_request
+    with: {variant: replay}
+assertions:
+  - kind: status
+    step: send
+    equals: 401
+  - kind: verifier
+    step: send
+    result: rejected
+    error: replay
+    policy_label: application_policy
+evidence: [redacted_protocol_trace, verifier_decision]
+cleanup: reset_fixture

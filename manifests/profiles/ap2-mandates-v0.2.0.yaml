@@ -1,0 +1,66 @@
+id: ap2-mandates-v0.2.0
+protocol: ap2
+release: v0.2.0
+status: tagged_release
+description: >
+  Agent Payments Protocol v0.2.0 mandate chains: Checkout Mandate (merchant verifier) and
+  Payment Mandate (credential-provider verifier) as SD-JWT key-binding chains, in both
+  human-present (closed mandate signed by the user) and autonomous (open mandate with cnf
+  → agent-signed closed mandate) modes, with transaction binding through checkout_hash.
+specification:
+  url: https://github.com/google-agentic-commerce/AP2/tree/b4587ac1d055888a73b4b21750973cffba961793/docs/ap2
+  repository: https://github.com/google-agentic-commerce/AP2
+  revision: b4587ac1d055888a73b4b21750973cffba961793
+  tag: v0.2.0
+  retrieved_on: "2026-09-26"
+schemas:
+  - path: schemas/pinned/ap2/v0.2.0/checkout_mandate.json
+    sha256: 10c0341edfeaa9084d3704ef8e94869de20499c8e357068d65f8d622bf79483a
+    source_path: code/sdk/schemas/ap2/checkout_mandate.json
+  - path: schemas/pinned/ap2/v0.2.0/open_checkout_mandate.json
+    sha256: bd6eb1c95a5ccb967259fae49100287755251c9d1bdb48342d96dd99fcb30b41
+    source_path: code/sdk/schemas/ap2/open_checkout_mandate.json
+  - path: schemas/pinned/ap2/v0.2.0/payment_mandate.json
+    sha256: 94c4af64ed29825cb956705ae763d42f3c04d22feb60b8d838dae2bb1eea1fb1
+    source_path: code/sdk/schemas/ap2/payment_mandate.json
+  - path: schemas/pinned/ap2/v0.2.0/open_payment_mandate.json
+    sha256: 65394d52af4d3326ab6b4bdcc2aa38d65a918d11b90efd8518c583bf015ab568
+    source_path: code/sdk/schemas/ap2/open_payment_mandate.json
+  - path: schemas/pinned/ap2/v0.2.0/checkout_receipt.json
+    sha256: 941198a1fc1916d04813a8b8ccba4b407471305a6eb1b5338b1f67b6299764ea
+    source_path: code/sdk/schemas/ap2/checkout_receipt.json
+  - path: schemas/pinned/ap2/v0.2.0/payment_receipt.json
+    sha256: e7d52266c407d32bcc49959f91e8ddb73024a1803bef75b7bd368fb93849ba88
+    source_path: code/sdk/schemas/ap2/payment_receipt.json
+roles:
+  lab: shopping_agent
+  target: merchant_and_credential_provider
+transport: sd-jwt-presentation
+capabilities:
+  required:
+    - id: role:merchant
+      description: Target verifies Checkout Mandates and returns Checkout Receipts.
+      discovery: "GET /ap2/capabilities roles contains 'merchant'"
+    - id: mandate:mandate.checkout.1
+      description: Closed Checkout Mandate type accepted.
+      discovery: "mandate_types contains mandate.checkout.1"
+  optional:
+    - id: role:credential_provider
+      description: Target verifies Payment Mandates and returns Payment Receipts.
+      discovery: "roles contains 'credential_provider'"
+    - id: mandate:mandate.checkout.open.1
+      description: Open Checkout Mandates (autonomous mode) accepted.
+      discovery: "mandate_types contains mandate.checkout.open.1"
+    - id: mandate:mandate.payment.1
+      description: Closed Payment Mandate type accepted.
+      discovery: "mandate_types contains mandate.payment.1"
+    - id: mandate:mandate.payment.open.1
+      description: Open Payment Mandates accepted.
+      discovery: "mandate_types contains mandate.payment.open.1"
+driver: ap2
+lab_decisions:
+  - "AP2 v0.2.0 defines mandate structures and verification rules but no REST binding for presenting them; /ap2/* endpoints are lab application endpoints."
+  - "The chain root is a test-issuer SD-JWT user credential (vct urn:commerce-lab:user-credential:1) whose cnf key signs the first kb+sd-jwt link; this models the Trusted Surface credential the spec references but does not fix."
+  - "Receipt `reference` is computed as the sd_hash-style hash over the full presentation string received."
+  - "Allowed JWS algorithms are ES256 and EdDSA; the merchant Checkout JWT must be ES256 (spec: not a deterministic signature scheme)."
+  - "Constraint amounts are compared in ISO 4217 minor units per the pinned open_payment_mandate.json (the prose example uses decimals)."

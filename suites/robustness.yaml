@@ -1,0 +1,11 @@
+id: robustness
+version: 0.1.0
+description: Application robustness cases only (labelled invariants, evidence from independent oracles).
+cases:
+- robustness/acp-complete-request-dropped-before-delivery.yaml
+- robustness/acp-complete-response-lost-replay.yaml
+- robustness/acp-payment-declined-no-order.yaml
+- robustness/acp-stale-price-change-before-complete.yaml
+- robustness/ucp-complete-duplicate-delivery.yaml
+- robustness/ucp-complete-response-lost-get-then-replay.yaml
+- robustness/ucp-complete-response-lost-replay-same-key.yaml

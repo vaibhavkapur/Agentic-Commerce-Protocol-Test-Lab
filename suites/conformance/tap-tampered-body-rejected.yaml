@@ -1,0 +1,28 @@
+id: tap-tampered-body-rejected
+title: Body changed after signing fails the Content-Digest check
+purpose: The signed content-digest no longer matches the delivered body; the gateway must reject.
+classification: protocol_conformance
+profile: tap-signed-requests-2025-10-28
+role: agent
+requirement: LAB-TAP-SIG-004
+requires_capabilities: [signed_request_verification]
+preconditions: [fixture_reset, registry_ready]
+steps:
+  - id: send
+    action: send_signed_request
+    with: {variant: tampered_body}
+    intentionally_invalid: true
+assertions:
+  - kind: status
+    step: send
+    equals: 401
+  - kind: verifier
+    step: send
+    result: rejected
+    error: content_digest_mismatch
+  - kind: oracle
+    oracle: tap_signature_independently_valid
+    step: send
+    equals: false
+evidence: [redacted_protocol_trace, verifier_decision]
+cleanup: reset_fixture

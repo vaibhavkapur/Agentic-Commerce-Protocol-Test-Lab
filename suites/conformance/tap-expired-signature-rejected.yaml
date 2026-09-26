@@ -1,0 +1,27 @@
+id: tap-expired-signature-rejected
+title: Signature past its expires parameter is rejected
+purpose: A stale signature context must be refused even though the cryptographic signature verifies.
+classification: protocol_conformance
+profile: tap-signed-requests-2025-10-28
+role: agent
+requirement: LAB-TAP-SIG-003
+requires_capabilities: [signed_request_verification]
+preconditions: [fixture_reset, registry_ready]
+steps:
+  - id: send
+    action: send_signed_request
+    with: {variant: expired}
+    intentionally_invalid: true
+assertions:
+  - kind: status
+    step: send
+    equals: 401
+  - kind: verifier
+    step: send
+    result: rejected
+    error: expired
+  - kind: oracle
+    oracle: tap_verdict_matches_independent
+    step: send
+evidence: [redacted_protocol_trace, verifier_decision]
+cleanup: reset_fixture

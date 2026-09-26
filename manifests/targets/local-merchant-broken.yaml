@@ -1,0 +1,22 @@
+id: local-merchant-broken
+description: >
+  Deliberately broken reference implementation. Ignores Idempotency-Key, charges the processor
+  before checking session state (double charge on a retried completion), returns legacy error
+  bodies, trusts caller-supplied X-Forwarded-Host in TAP verification, has no replay cache, and
+  authenticates AP2 mandate chains without checking they are bound to the checkout being completed.
+kind: local_reference
+revision: reference_targets.broken@0.1.0
+factory: reference_targets:broken
+profiles:
+  - acp-checkout-2026-04-17
+  - ucp-checkout-2026-08-25
+  - ap2-mandates-v0.2.0
+  - tap-signed-requests-2025-10-28
+observation:
+  kind: lab_fixture
+declared_guarantees:
+  - one-order-and-one-charge-per-operation
+  - no-charge-without-order
+  - coherent-cancellation
+  - price-integrity-at-completion
+  - authority-bound-to-checkout

@@ -1,0 +1,109 @@
+profile: ucp-checkout-2026-08-25
+requirements:
+  - id: LAB-UCP-DISC-001
+    kind: normative
+    keyword: schema
+    source:
+      document: docs/specification/shopping/checkout/rest.md; source/schemas/ucp.json
+      section: "Protocol Fundamentals › Discovery; ucp.json $defs.business_schema"
+      quote: "Businesses advertise REST transport availability through their UCP profile at /.well-known/ucp. ... required: [services, payment_handlers]"
+      revision: cd78fb38e819de77d9b527d110476eccb876f1bd
+    statement: The business profile at /.well-known/ucp validates against the business profile schema and exposes the shopping service REST endpoint.
+    expected_behavior: 200; body validates against profile.json business_schema; services["dev.ucp.shopping"] has a rest binding with endpoint.
+    applicability: All businesses claiming the profile.
+
+  - id: LAB-UCP-SESS-001
+    kind: normative
+    keyword: schema
+    source:
+      document: source/services/shopping/rest.openapi.json; source/schemas/shopping/checkout.json
+      section: "POST /checkout-sessions responses.201; checkout.json required"
+      quote: "required: [ucp, id, line_items, status, currency, totals, links]"
+      revision: cd78fb38e819de77d9b527d110476eccb876f1bd
+    statement: Create Checkout returns 201 with a Checkout object carrying the ucp envelope, id, line_items, status, currency, totals, and links.
+    expected_behavior: 201; body validates against shopping/checkout.json; status is one of the lifecycle values.
+    applicability: Businesses advertising dev.ucp.shopping.checkout.
+
+  - id: LAB-UCP-TOT-001
+    kind: normative
+    keyword: MUST
+    source:
+      document: source/schemas/common/types/totals.json
+      section: "description"
+      quote: "MUST contain exactly one subtotal and one total entry."
+      revision: cd78fb38e819de77d9b527d110476eccb876f1bd
+    statement: Checkout totals contain exactly one subtotal entry and exactly one total entry.
+    expected_behavior: totals[].type has exactly one 'subtotal' and one 'total'.
+    applicability: Businesses advertising dev.ucp.shopping.checkout.
+
+  - id: LAB-UCP-IDEM-001
+    kind: normative
+    keyword: MUST
+    source:
+      document: docs/specification/shopping/checkout/rest.md
+      section: "HTTP Headers › Specific Header Requirements › Idempotency-Key"
+      quote: "When provided, the server MUST: ... 2. Return the cached result for duplicate keys whose request body matches the original."
+      revision: cd78fb38e819de77d9b527d110476eccb876f1bd
+    statement: An identical Complete Checkout request re-sent with the same Idempotency-Key returns the cached result and does not place a second order.
+    expected_behavior: Second response equals the first (same order id); merchant order count == 1; settled charges == 1.
+    applicability: Businesses that accept Idempotency-Key (the OpenAPI marks it required).
+
+  - id: LAB-UCP-IDEM-002
+    kind: normative
+    keyword: MUST
+    source:
+      document: docs/specification/shopping/checkout/rest.md
+      section: "HTTP Headers › Specific Header Requirements › Idempotency-Key"
+      quote: "3. Return 409 Conflict if the key is reused with a mismatched body."
+      revision: cd78fb38e819de77d9b527d110476eccb876f1bd
+    statement: Reusing an Idempotency-Key with a different body returns 409 Conflict.
+    expected_behavior: HTTP 409 with the error_response envelope; no extra order or charge.
+    applicability: Businesses that accept Idempotency-Key.
+
+  - id: LAB-UCP-COMP-001
+    kind: normative
+    keyword: schema
+    source:
+      document: docs/specification/shopping/checkout/index.md; source/schemas/shopping/types/order_confirmation.json
+      section: "Operations › Complete Checkout; order_confirmation.json required"
+      quote: "When completion finishes synchronously, status is completed and the order field is present, providing necessary identifiers such as id and permalink_url"
+      revision: cd78fb38e819de77d9b527d110476eccb876f1bd
+    statement: A synchronous successful completion returns status completed with order.id and order.permalink_url.
+    expected_behavior: 200; status == completed; order.id and order.permalink_url present; exactly one order at the merchant.
+    applicability: Businesses advertising dev.ucp.shopping.checkout that complete synchronously.
+
+  - id: LAB-UCP-CANC-001
+    kind: normative
+    keyword: SHOULD
+    source:
+      document: docs/specification/shopping/checkout/index.md
+      section: "Operations › Cancel Checkout"
+      quote: "If the checkout session cannot be canceled (e.g. checkout session is already canceled or completed), then businesses SHOULD send back an error indicating the operation is not allowed."
+      revision: cd78fb38e819de77d9b527d110476eccb876f1bd
+    statement: Cancelling a completed checkout returns an error and leaves the completed checkout and its order intact.
+    expected_behavior: 4xx with the error_response envelope; GET still shows completed; merchant order count == 1.
+    applicability: Businesses advertising dev.ucp.shopping.checkout. SHOULD-level; a FAIL here is a deviation from recommended behaviour, not a MUST violation.
+
+  - id: LAB-UCP-ERR-001
+    kind: normative
+    keyword: schema
+    source:
+      document: docs/specification/shopping/checkout/rest.md; source/schemas/common/types/error_response.json
+      section: "Protocol Mechanics › Error Responses; error_response.json"
+      quote: "Protocol errors: Return appropriate HTTP status code ... with JSON body containing code and content. ... required: [ucp, messages]; ucp.status MUST be 'error'"
+      revision: cd78fb38e819de77d9b527d110476eccb876f1bd
+    statement: Protocol errors use the error_response envelope with ucp.status error and at least one message with code and content.
+    expected_behavior: A GET for an unknown checkout id returns 404 and a body validating against error_response.json.
+    applicability: All operations.
+
+  - id: LAB-UCP-DISCNT-001
+    kind: normative
+    keyword: schema
+    source:
+      document: source/schemas/shopping/discount.json
+      section: "Discount Extension (dev.ucp.shopping.discount)"
+      quote: "Extends Cart and Checkout with discount support, including discount codes, automatic discounts ..."
+      revision: cd78fb38e819de77d9b527d110476eccb876f1bd
+    statement: When the discount capability is advertised, submitting a discount code yields discounts.applied on the checkout and a negative discount total.
+    expected_behavior: discounts.applied non-empty; totals contain a discount entry with amount < 0.
+    applicability: Only businesses advertising dev.ucp.shopping.discount; otherwise NOT_APPLICABLE.

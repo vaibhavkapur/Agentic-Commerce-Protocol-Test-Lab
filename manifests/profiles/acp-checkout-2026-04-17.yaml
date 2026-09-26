@@ -1,0 +1,49 @@
+id: acp-checkout-2026-04-17
+protocol: acp
+release: "2026-04-17"
+status: released_snapshot
+description: >
+  Agentic Commerce Protocol, Agentic Checkout REST API, released snapshot 2026-04-17.
+  Covers checkout session create/update/get/complete/cancel, the Idempotency-Key contract,
+  discovery at /.well-known/acp.json, and the optional discount extension.
+specification:
+  url: https://github.com/agentic-commerce-protocol/agentic-commerce-protocol/tree/7fdd78df677a94dce04c770644b0fbbb1401272b/spec/2026-04-17
+  repository: https://github.com/agentic-commerce-protocol/agentic-commerce-protocol
+  revision: 7fdd78df677a94dce04c770644b0fbbb1401272b
+  tag: spec/2026-04-17 (tree f90eae69b2cb6e93746436ab8c81fbc356e398b6)
+  retrieved_on: "2026-09-26"
+schemas:
+  - path: schemas/pinned/acp/2026-04-17/schema.agentic_checkout.json
+    sha256: d0e4290617d66bf05d002b8ace388732be2b3eb9a92a1003db7a2daa1e0436f2
+    source_path: spec/2026-04-17/json-schema/schema.agentic_checkout.json
+  - path: schemas/pinned/acp/2026-04-17/openapi.agentic_checkout.yaml
+    sha256: 2a0aa239b4aed50732461d9b7e443ad98d5c2d3431277899433ead07cbd4fc55
+    source_path: spec/2026-04-17/openapi/openapi.agentic_checkout.yaml
+roles:
+  lab: agent
+  target: seller
+transport: rest
+capabilities:
+  required:
+    - id: checkout
+      description: Checkout service implemented (create/update/get/complete/cancel checkout sessions).
+      discovery: "/.well-known/acp.json capabilities.services contains 'checkout'"
+  optional:
+    - id: extension:discount
+      description: Discount codes via discounts.codes on create/update and discounts on the session.
+      discovery: "/.well-known/acp.json capabilities.extensions[].name == 'discount'"
+    - id: orders
+      description: Orders service.
+      discovery: "capabilities.services contains 'orders'"
+    - id: delegate_payment
+      description: Delegate payment service.
+      discovery: "capabilities.services contains 'delegate_payment'"
+    - id: carts
+      description: Carts service.
+      discovery: "capabilities.services contains 'carts'"
+driver: acp
+lab_decisions:
+  - "CheckoutSessionCreateRequest.line_items items are `Item` objects with no quantity field (additionalProperties: false). The lab sends one Item entry per unit and expects repeated ids to aggregate into one line item."
+  - "Idempotency-Key scope follows the OpenAPI parameter description: authenticated identity + endpoint."
+  - "Only the REST transport is exercised; the `mcp` transport binding is out of scope for this profile."
+  - "The lab's recovery policy for a lost completion response is to re-send the identical request with the same Idempotency-Key (the replay contract); UCP-style GET-first recovery is a separate policy option."

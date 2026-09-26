@@ -1,0 +1,25 @@
+id: tap-missing-content-digest-rejected
+title: Signed request with a body that does not cover content-digest is rejected
+purpose: "Lab trust policy: bodies must be bound to the signature through content-digest, otherwise the payload is unprotected."
+classification: protocol_conformance
+profile: tap-signed-requests-2025-10-28
+role: agent
+requirement: LAB-TAP-CD-001
+requires_capabilities: [signed_request_verification]
+preconditions: [fixture_reset, registry_ready]
+steps:
+  - id: send
+    action: send_signed_request
+    with: {variant: missing_content_digest}
+    intentionally_invalid: true
+assertions:
+  - kind: status
+    step: send
+    equals: 401
+  - kind: verifier
+    step: send
+    result: rejected
+    error: coverage_insufficient
+    policy_label: application_policy
+evidence: [redacted_protocol_trace, verifier_decision]
+cleanup: reset_fixture

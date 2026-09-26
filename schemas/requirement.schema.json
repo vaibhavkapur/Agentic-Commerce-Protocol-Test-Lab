@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://commerce-lab.local/schemas/requirement.schema.json",
+  "title": "Commerce Lab Requirement Registry File",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["profile", "requirements"],
+  "properties": {
+    "profile": { "type": "string" },
+    "requirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "source", "statement", "expected_behavior", "applicability"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^LAB-[A-Z0-9]+-[A-Z0-9]+-[0-9]{3}$" },
+          "kind": { "type": "string", "enum": ["normative", "application_invariant", "application_policy"] },
+          "source": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["document", "section"],
+            "properties": {
+              "document": { "type": "string" },
+              "section": { "type": "string" },
+              "quote": { "type": "string" },
+              "revision": { "type": "string" }
+            }
+          },
+          "statement": { "type": "string" },
+          "expected_behavior": { "type": "string" },
+          "applicability": { "type": "string" },
+          "keyword": { "type": "string", "enum": ["MUST", "MUST NOT", "SHOULD", "SHOULD NOT", "MAY", "schema", "invariant", "policy"] }
+        }
+      }
+    }
+  }
+}

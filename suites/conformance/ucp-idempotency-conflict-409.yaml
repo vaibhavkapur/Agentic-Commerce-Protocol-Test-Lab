@@ -1,0 +1,28 @@
+id: ucp-idempotency-conflict-409
+title: Idempotency-Key reused with a mismatched body returns 409 Conflict
+purpose: The server MUST return 409 Conflict for a reused key with a different body, using the error_response envelope, and must not charge again.
+classification: protocol_conformance
+profile: ucp-checkout-2026-08-25
+role: platform
+requirement: LAB-UCP-IDEM-002
+requires_capabilities: [dev.ucp.shopping.checkout]
+preconditions: [fixture_reset, result_lookup_supported]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: complete
+    action: complete_checkout
+  - id: conflict
+    action: retry_with_different_body
+assertions:
+  - kind: status
+    step: conflict
+    equals: 409
+  - kind: schema
+    step: conflict
+    schema: ucp:error_response
+  - kind: metric
+    metric: settled_charge_count_for_operation
+    equals: 1
+evidence: [redacted_protocol_trace, payment_event_snapshot, idempotency_snapshot]
+cleanup: reset_fixture

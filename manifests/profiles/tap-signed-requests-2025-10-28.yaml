@@ -1,0 +1,54 @@
+id: tap-signed-requests-2025-10-28
+protocol: tap
+release: "sample@16d59bd (2025-10-28)"
+status: reference_sample
+description: >
+  Visa Trusted Agent Protocol signed merchant requests, as demonstrated by the public sample
+  implementation (agent registry, CDN proxy verifier, merchant backend). Signature headers follow
+  RFC 9421 with the sample's parameter set: created, expires, nonce, keyid, alg, tag and a
+  Signature-Agent header naming the agent directory.
+specification:
+  url: https://github.com/visa/trusted-agent-protocol/tree/16d59bdf3f8a542bc538d0962edbb80ea30a02af
+  repository: https://github.com/visa/trusted-agent-protocol
+  revision: 16d59bdf3f8a542bc538d0962edbb80ea30a02af
+  retrieved_on: "2026-09-26"
+schemas:
+  - path: schemas/pinned/tap/16d59bd/reference_signature_verification.py
+    sha256: b3ff650e50e08798f7b8519d97431ea43cf35a0bf2a12d1aad2f298906c54149
+    source_path: merchant-backend/app/security/signature_verification.py
+    note: The sample verifier is the closest thing to a normative artifact; it is pinned for provenance, not executed.
+reference_implementation:
+  repository: https://github.com/visa/trusted-agent-protocol
+  revision: 16d59bdf3f8a542bc538d0962edbb80ea30a02af
+  note: RFC 9421 (HTTP Message Signatures) and RFC 9530 (Content-Digest) are the normative bases the sample builds on.
+roles:
+  lab: agent
+  target: merchant_gateway
+transport: http-signed
+capabilities:
+  required:
+    - id: signed_request_verification
+      description: Target verifies RFC 9421 signatures on agent requests.
+      discovery: "GET /tap/capabilities responds"
+    - id: tag:agent-payer-auth
+      description: Payment-context signatures accepted on the checkout authorization endpoint.
+      discovery: "capabilities.tags contains agent-payer-auth"
+    - id: alg:ed25519
+      description: Ed25519 signatures accepted.
+      discovery: "capabilities.algorithms contains ed25519"
+  optional:
+    - id: tag:agent-browser-auth
+      description: Browsing-context signatures accepted on catalog endpoints.
+      discovery: "capabilities.tags contains agent-browser-auth"
+    - id: alg:ecdsa-p256-sha256
+      description: ECDSA P-256 signatures accepted.
+      discovery: "capabilities.algorithms contains ecdsa-p256-sha256"
+    - id: policy:replay_protection
+      description: Nonce replay rejection (lab trust policy, not a protocol clause).
+      discovery: "capabilities.policy.replay_protection == true"
+driver: tap
+lab_decisions:
+  - "The sample's verifier omits the `\"@signature-params\"` line from the signature base. The lab pins the RFC 9421 §2.5 base *with* that line; interop with the raw sample requires that deviation to be reconciled and is outside this profile."
+  - "Replay protection, key revocation, and key-rotation grace are lab trust policy (labelled application_policy) unless the pinned profile states them."
+  - "@authority is taken from the trusted boundary (X-Lab-Boundary-Authority set by the lab proxy), never from caller-supplied X-Forwarded-Host."
+  - "Requests with a body must cover content-digest (RFC 9530 sha-256)."

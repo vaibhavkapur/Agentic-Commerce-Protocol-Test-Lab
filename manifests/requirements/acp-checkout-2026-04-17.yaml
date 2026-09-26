@@ -1,0 +1,133 @@
+profile: acp-checkout-2026-04-17
+requirements:
+  - id: LAB-ACP-DISC-001
+    kind: normative
+    keyword: schema
+    source:
+      document: spec/2026-04-17/json-schema/schema.agentic_checkout.json
+      section: "$defs.DiscoveryResponse"
+      quote: "Well-known discovery document served at /.well-known/acp.json. Describes the seller's capabilities."
+      revision: 7fdd78df677a94dce04c770644b0fbbb1401272b
+    statement: The seller serves a discovery document at /.well-known/acp.json that validates against DiscoveryResponse.
+    expected_behavior: GET /.well-known/acp.json returns 200 with protocol.name == "acp", api_base_url, transports, and capabilities.services.
+    applicability: All sellers claiming the profile.
+
+  - id: LAB-ACP-SESS-001
+    kind: normative
+    keyword: MUST
+    source:
+      document: spec/2026-04-17/openapi/openapi.agentic_checkout.yaml
+      section: "paths./checkout_sessions.post (createCheckoutSession)"
+      quote: "MUST return 201 with a rich, authoritative cart state."
+      revision: 7fdd78df677a94dce04c770644b0fbbb1401272b
+    statement: Creating a checkout session returns HTTP 201 with a CheckoutSession body.
+    expected_behavior: 201 and a body that validates against CheckoutSession (id, status, currency, line_items, totals, fulfillment_options, messages, links, capabilities).
+    applicability: Sellers advertising the checkout service.
+
+  - id: LAB-ACP-SESS-002
+    kind: normative
+    keyword: schema
+    source:
+      document: spec/2026-04-17/json-schema/schema.agentic_checkout.json
+      section: "$defs.CheckoutSessionBase.required"
+      quote: "required: [id, status, currency, line_items, totals, fulfillment_options, messages, links, capabilities]"
+      revision: 7fdd78df677a94dce04c770644b0fbbb1401272b
+    statement: Every checkout session response carries the required CheckoutSession fields with native status values.
+    expected_behavior: GET /checkout_sessions/{id} body validates against CheckoutSession and status is one of the enumerated values.
+    applicability: Sellers advertising the checkout service.
+
+  - id: LAB-ACP-IDEM-001
+    kind: normative
+    keyword: MUST
+    source:
+      document: spec/2026-04-17/openapi/openapi.agentic_checkout.yaml
+      section: "components.parameters.IdempotencyKey; components.responses.IdempotencyKeyRequired"
+      quote: "Idempotency key. MUST be present on all POST requests. ... 400: idempotency_key_required"
+      revision: 7fdd78df677a94dce04c770644b0fbbb1401272b
+    statement: POST requests without an Idempotency-Key are rejected with 400 and an Error of type invalid_request, code idempotency_key_required.
+    expected_behavior: HTTP 400; body validates against Error; code == idempotency_key_required.
+    applicability: All POST operations.
+
+  - id: LAB-ACP-IDEM-002
+    kind: normative
+    keyword: schema
+    source:
+      document: spec/2026-04-17/openapi/openapi.agentic_checkout.yaml
+      section: "paths./checkout_sessions/{id}/complete.post.responses.200.headers.Idempotent-Replayed"
+      quote: "true when the response is a cached replay of a previous request with the same Idempotency-Key"
+      revision: 7fdd78df677a94dce04c770644b0fbbb1401272b
+    statement: "Re-sending an identical POST with the same Idempotency-Key returns the cached response and the Idempotent-Replayed: true header."
+    expected_behavior: Second identical complete request returns 200 with the same order id and Idempotent-Replayed == "true".
+    applicability: All POST operations.
+
+  - id: LAB-ACP-IDEM-003
+    kind: normative
+    keyword: schema
+    source:
+      document: spec/2026-04-17/openapi/openapi.agentic_checkout.yaml
+      section: "components.responses.IdempotencyConflict (422)"
+      quote: "Idempotency payload mismatch ... code: idempotency_conflict"
+      revision: 7fdd78df677a94dce04c770644b0fbbb1401272b
+    statement: Reusing an Idempotency-Key with a different request body is rejected with 422 and code idempotency_conflict.
+    expected_behavior: HTTP 422; body validates against Error; code == idempotency_conflict; no additional order or charge is created.
+    applicability: All POST operations.
+
+  - id: LAB-ACP-COMP-001
+    kind: normative
+    keyword: MUST
+    source:
+      document: spec/2026-04-17/openapi/openapi.agentic_checkout.yaml
+      section: "paths./checkout_sessions/{id}/complete.post (completeCheckoutSession)"
+      quote: "Finalizes the checkout by applying a payment method. MUST create an order and return completed state on success."
+      revision: 7fdd78df677a94dce04c770644b0fbbb1401272b
+    statement: A successful completion returns status completed and an order object (id, checkout_session_id, permalink_url).
+    expected_behavior: HTTP 200; body validates against CheckoutSessionWithOrder; status == completed; exactly one order exists at the merchant.
+    applicability: Sellers advertising the checkout service.
+
+  - id: LAB-ACP-ERR-001
+    kind: normative
+    keyword: schema
+    source:
+      document: spec/2026-04-17/json-schema/schema.agentic_checkout.json
+      section: "$defs.Error"
+      quote: "Protocol-level error returned in 4xx/5xx responses when the server cannot return a valid CheckoutSession at all ... required: [type, code, message]"
+      revision: 7fdd78df677a94dce04c770644b0fbbb1401272b
+    statement: When no valid session can be returned, the 4xx/5xx body is an Error object with type, code, and message.
+    expected_behavior: A create request for an unknown item returns 4xx and a body validating against Error.
+    applicability: All operations.
+
+  - id: LAB-ACP-CANC-001
+    kind: normative
+    keyword: schema
+    source:
+      document: spec/2026-04-17/openapi/openapi.agentic_checkout.yaml
+      section: "paths./checkout_sessions/{id}/cancel.post (cancelCheckoutSession)"
+      quote: "Cancels a session if not already completed or canceled."
+      revision: 7fdd78df677a94dce04c770644b0fbbb1401272b
+    statement: Cancelling a completed session is refused and the session (and its order) remain intact.
+    expected_behavior: Cancel after completion returns a 4xx Error; GET still shows status completed; merchant order count stays 1.
+    applicability: Sellers advertising the checkout service.
+
+  - id: LAB-ACP-VER-001
+    kind: normative
+    keyword: schema
+    source:
+      document: spec/2026-04-17/openapi/openapi.agentic_checkout.yaml
+      section: "components.parameters.APIVersion (required: true); $defs.Error.supported_versions"
+      quote: "API-Version ... required: true. supported_versions: Only included in version-related errors."
+      revision: 7fdd78df677a94dce04c770644b0fbbb1401272b
+    statement: Requests without API-Version are rejected with a 4xx Error that lists supported_versions.
+    expected_behavior: HTTP 400; Error body with supported_versions array containing 2026-04-17.
+    applicability: All operations.
+
+  - id: LAB-ACP-DISCNT-001
+    kind: normative
+    keyword: schema
+    source:
+      document: spec/2026-04-17/json-schema/schema.agentic_checkout.json
+      section: "$defs.DiscountsRequest; $defs.DiscountsResponse; $defs.DiscoveryCapabilities.extensions"
+      quote: "Discount codes input and applied discounts output in checkout responses."
+      revision: 7fdd78df677a94dce04c770644b0fbbb1401272b
+    statement: When the discount extension is advertised, discounts.codes on create yields a discounts object with applied and rejected entries.
+    expected_behavior: Session includes discounts.applied for a valid code and discounts.rejected with a DiscountErrorCode for an invalid code; a discount total is present.
+    applicability: Only sellers advertising extension 'discount'; otherwise NOT_APPLICABLE.

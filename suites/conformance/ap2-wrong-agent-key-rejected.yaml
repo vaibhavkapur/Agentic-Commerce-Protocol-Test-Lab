@@ -1,0 +1,27 @@
+id: ap2-wrong-agent-key-rejected
+title: Closed mandate signed by a key other than the open mandate's cnf key is rejected
+purpose: "Key binding: only the agent key endorsed in the open mandate may close it."
+classification: protocol_conformance
+profile: ap2-mandates-v0.2.0
+role: shopping_agent
+requirement: LAB-AP2-KEY-001
+requires_capabilities: ["role:merchant", "mandate:mandate.checkout.open.1"]
+preconditions: [fixture_reset, issuer_ready]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: sign
+    action: obtain_checkout_jwt
+  - id: build
+    action: build_checkout_mandate
+    with: {variant: wrong_agent_key}
+    intentionally_invalid: true
+  - id: present
+    action: present_checkout_mandate
+assertions:
+  - kind: verifier
+    step: present
+    result: Error
+    error: invalid_credential
+evidence: [redacted_protocol_trace, verifier_decision]
+cleanup: reset_fixture

@@ -1,0 +1,28 @@
+id: acp-idempotency-key-required
+title: POST without Idempotency-Key is rejected with idempotency_key_required
+purpose: Idempotency-Key MUST be present on all POST requests; its absence is a 400 Error with code idempotency_key_required.
+classification: protocol_conformance
+profile: acp-checkout-2026-04-17
+role: agent
+requirement: LAB-ACP-IDEM-001
+requires_capabilities: [checkout]
+preconditions: [fixture_reset]
+steps:
+  - id: create
+    action: create_checkout_session
+    with:
+      omit_headers: [Idempotency-Key]
+    intentionally_invalid: true
+assertions:
+  - kind: status
+    step: create
+    equals: 400
+  - kind: schema
+    step: create
+    schema: acp:Error
+  - kind: field
+    step: create
+    path: $.code
+    equals: idempotency_key_required
+evidence: [redacted_protocol_trace]
+cleanup: reset_fixture

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://commerce-lab.local/schemas/target.schema.json",
+  "title": "Commerce Lab Target",
+  "description": "An implementation under test. Local reference targets are built in-process; network targets are addressed by URL.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "kind", "revision", "profiles", "observation"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]+$" },
+    "description": { "type": "string" },
+    "kind": { "type": "string", "enum": ["local_reference", "network"] },
+    "revision": { "type": "string" },
+    "profiles": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "factory": { "type": "string", "description": "Python path of the app factory for local_reference targets." },
+    "options": { "type": "object" },
+    "base_url": { "type": "string" },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["lab_fixture", "none"] },
+        "base_url": { "type": "string" }
+      }
+    },
+    "proxy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "type": "string", "enum": ["in_process", "network"] },
+        "control_url": { "type": "string" },
+        "base_url": { "type": "string" }
+      }
+    },
+    "declared_guarantees": {
+      "type": "array",
+      "description": "Application invariants the target claims to satisfy; robustness cases are applicable only when declared.",
+      "items": { "type": "string" }
+    }
+  }
+}

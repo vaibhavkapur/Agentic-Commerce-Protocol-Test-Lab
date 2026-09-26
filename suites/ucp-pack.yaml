@@ -1,0 +1,16 @@
+id: ucp-pack
+version: 0.1.0
+description: All UCP cases.
+cases:
+- conformance/ucp-cancel-after-complete.yaml
+- conformance/ucp-complete-sync-order.yaml
+- conformance/ucp-create-checkout-201.yaml
+- conformance/ucp-discount-capability.yaml
+- conformance/ucp-error-envelope-unknown-checkout.yaml
+- conformance/ucp-idempotency-conflict-409.yaml
+- conformance/ucp-idempotent-replay.yaml
+- conformance/ucp-profile-discovery.yaml
+- conformance/ucp-totals-exactly-one-subtotal-and-total.yaml
+- robustness/ucp-complete-duplicate-delivery.yaml
+- robustness/ucp-complete-response-lost-get-then-replay.yaml
+- robustness/ucp-complete-response-lost-replay-same-key.yaml

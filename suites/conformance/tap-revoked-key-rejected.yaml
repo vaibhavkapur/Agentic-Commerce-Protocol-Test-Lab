@@ -1,0 +1,27 @@
+id: tap-revoked-key-rejected
+title: Revoked registry key is rejected immediately
+purpose: "Lab trust policy: revocation takes effect at once regardless of the signature's validity window."
+classification: protocol_conformance
+profile: tap-signed-requests-2025-10-28
+role: agent
+requirement: LAB-TAP-KEY-001
+requires_capabilities: [signed_request_verification]
+preconditions: [fixture_reset, registry_ready]
+steps:
+  - id: revoke
+    action: revoke_agent_key
+  - id: send
+    action: send_signed_request
+    with: {variant: revoked_key}
+    intentionally_invalid: true
+assertions:
+  - kind: status
+    step: send
+    equals: 401
+  - kind: verifier
+    step: send
+    result: rejected
+    error: key_revoked
+    policy_label: application_policy
+evidence: [redacted_protocol_trace, verifier_decision, registry_snapshot]
+cleanup: reset_fixture

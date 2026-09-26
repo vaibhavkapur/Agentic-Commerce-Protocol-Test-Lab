@@ -1,0 +1,24 @@
+id: tap-wrong-tag-rejected
+title: Browsing-context signature is not accepted for payment authorization
+purpose: The tag parameter binds the signature to the operation type; agent-browser-auth must not authorize a payment endpoint.
+classification: protocol_conformance
+profile: tap-signed-requests-2025-10-28
+role: agent
+requirement: LAB-TAP-CTX-001
+requires_capabilities: [signed_request_verification, "tag:agent-browser-auth", "tag:agent-payer-auth"]
+preconditions: [fixture_reset, registry_ready]
+steps:
+  - id: send
+    action: send_signed_request
+    with: {variant: wrong_tag}
+    intentionally_invalid: true
+assertions:
+  - kind: status
+    step: send
+    equals: 401
+  - kind: verifier
+    step: send
+    result: rejected
+    error: context_mismatch
+evidence: [redacted_protocol_trace, verifier_decision]
+cleanup: reset_fixture

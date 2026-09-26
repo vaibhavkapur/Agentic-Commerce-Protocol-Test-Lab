@@ -1,0 +1,17 @@
+id: network-merchant-example
+description: >
+  Example of a network target: the implementation under test, the lab fault proxy, and (optionally)
+  lab observation endpoints run as separate processes (see docker-compose.yml). Without an
+  observation channel, order/charge-count assertions are reported INCONCLUSIVE rather than assumed.
+kind: network
+revision: unknown
+base_url: http://localhost:8000
+profiles:
+  - acp-checkout-2026-04-17
+  - ucp-checkout-2026-08-25
+observation:
+  kind: none
+proxy:
+  mode: network
+  base_url: http://localhost:8080
+  control_url: http://localhost:8080

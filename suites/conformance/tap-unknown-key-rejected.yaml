@@ -1,0 +1,24 @@
+id: tap-unknown-key-rejected
+title: Signature with an unregistered keyid is rejected
+purpose: The registry lookup fails; the request must not be treated as coming from a trusted agent.
+classification: protocol_conformance
+profile: tap-signed-requests-2025-10-28
+role: agent
+requirement: LAB-TAP-SIG-002
+requires_capabilities: [signed_request_verification]
+preconditions: [fixture_reset, registry_ready]
+steps:
+  - id: send
+    action: send_signed_request
+    with: {variant: unknown_key}
+    intentionally_invalid: true
+assertions:
+  - kind: status
+    step: send
+    equals: 401
+  - kind: verifier
+    step: send
+    result: rejected
+    error: unknown_key
+evidence: [redacted_protocol_trace, verifier_decision, registry_snapshot]
+cleanup: reset_fixture

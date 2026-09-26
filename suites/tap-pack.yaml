@@ -1,0 +1,16 @@
+id: tap-pack
+version: 0.1.0
+description: All TAP cases.
+cases:
+- conformance/tap-expired-signature-rejected.yaml
+- conformance/tap-forwarded-host-spoof-rejected.yaml
+- conformance/tap-key-rotation-grace.yaml
+- conformance/tap-missing-content-digest-rejected.yaml
+- conformance/tap-mutated-path-rejected.yaml
+- conformance/tap-replay-rejected.yaml
+- conformance/tap-revoked-key-rejected.yaml
+- conformance/tap-tampered-body-rejected.yaml
+- conformance/tap-unknown-key-rejected.yaml
+- conformance/tap-unsupported-alg-rejected.yaml
+- conformance/tap-valid-request-accepted.yaml
+- conformance/tap-wrong-tag-rejected.yaml

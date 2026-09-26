@@ -1,0 +1,36 @@
+id: acp-idempotency-conflict
+title: Reusing an Idempotency-Key with a different body yields 422 idempotency_conflict
+purpose: A mismatched payload under a used key must be refused with 422 and must not cause any additional charge.
+classification: protocol_conformance
+profile: acp-checkout-2026-04-17
+role: agent
+requirement: LAB-ACP-IDEM-003
+requires_capabilities: [checkout]
+preconditions: [fixture_reset, result_lookup_supported]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: complete
+    action: complete_checkout
+  - id: conflict
+    action: retry_with_different_body
+    with: {payment_token: tok_ok_second_instrument}
+assertions:
+  - kind: status
+    step: conflict
+    equals: 422
+  - kind: schema
+    step: conflict
+    schema: acp:Error
+  - kind: field
+    step: conflict
+    path: $.code
+    equals: idempotency_conflict
+  - kind: metric
+    metric: settled_charge_count_for_operation
+    equals: 1
+  - kind: metric
+    metric: merchant_order_count_for_operation
+    equals: 1
+evidence: [redacted_protocol_trace, payment_event_snapshot, idempotency_snapshot]
+cleanup: reset_fixture

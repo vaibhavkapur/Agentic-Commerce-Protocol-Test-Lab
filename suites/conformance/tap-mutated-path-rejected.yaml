@@ -1,0 +1,24 @@
+id: tap-mutated-path-rejected
+title: Request whose covered @path was changed after signing is rejected
+purpose: Mutation of a covered component invalidates the signature; the independent verifier must also reject the request as sent.
+classification: protocol_conformance
+profile: tap-signed-requests-2025-10-28
+role: agent
+requirement: LAB-TAP-SIG-004
+requires_capabilities: [signed_request_verification]
+preconditions: [fixture_reset, registry_ready]
+steps:
+  - id: send
+    action: send_signed_request
+    with: {variant: mutated_path}
+    intentionally_invalid: true
+assertions:
+  - kind: status
+    step: send
+    in: [401, 404]
+  - kind: oracle
+    oracle: tap_signature_independently_valid
+    step: send
+    equals: false
+evidence: [redacted_protocol_trace, verifier_decision]
+cleanup: reset_fixture

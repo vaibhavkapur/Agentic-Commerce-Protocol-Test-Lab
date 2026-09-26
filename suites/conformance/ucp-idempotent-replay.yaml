@@ -1,0 +1,36 @@
+id: ucp-idempotent-replay
+title: Identical Complete Checkout re-sent with the same Idempotency-Key returns the cached result
+purpose: The server MUST return the cached result for duplicate keys whose body matches; no second order or charge may be placed.
+classification: protocol_conformance
+profile: ucp-checkout-2026-08-25
+role: platform
+requirement: LAB-UCP-IDEM-001
+requires_capabilities: [dev.ucp.shopping.checkout]
+preconditions: [fixture_reset, result_lookup_supported]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: complete
+    action: complete_checkout
+  - id: retry
+    action: retry_last_operation
+assertions:
+  - kind: status
+    step: retry
+    equals: 200
+  - kind: field
+    step: retry
+    path: $.status
+    equals: completed
+  - kind: field
+    step: retry
+    path: $.order.id
+    present: true
+  - kind: metric
+    metric: merchant_order_count_for_operation
+    equals: 1
+  - kind: metric
+    metric: settled_charge_count_for_operation
+    equals: 1
+evidence: [redacted_protocol_trace, merchant_order_snapshot, payment_event_snapshot, idempotency_snapshot]
+cleanup: reset_fixture

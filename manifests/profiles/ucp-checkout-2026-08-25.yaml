@@ -1,0 +1,49 @@
+id: ucp-checkout-2026-08-25
+protocol: ucp
+release: "2026-08-25"
+status: tagged_release
+description: >
+  Universal Commerce Protocol, Shopping service REST binding, tag v2026-08-25.
+  Covers business profile discovery at /.well-known/ucp, capability negotiation,
+  the checkout status lifecycle, Idempotency-Key handling, and the optional discount extension.
+specification:
+  url: https://github.com/Universal-Commerce-Protocol/ucp/tree/cd78fb38e819de77d9b527d110476eccb876f1bd/docs/specification/shopping/checkout
+  repository: https://github.com/Universal-Commerce-Protocol/ucp
+  revision: cd78fb38e819de77d9b527d110476eccb876f1bd
+  tag: v2026-08-25
+  retrieved_on: "2026-09-26"
+schemas:
+  - path: schemas/pinned/ucp/2026-08-25/schemas/shopping/checkout.json
+    sha256: 1a856fabbe86e031baab0c35745cb0b44481da29a2075ee1e73f720e6337204d
+    source_path: source/schemas/shopping/checkout.json
+  - path: schemas/pinned/ucp/2026-08-25/schemas/ucp.json
+    sha256: 05329a3ae4546f97efcf381c3b0cb279d21063e351bcf4edd00950dc14d67c9c
+    source_path: source/schemas/ucp.json
+  - path: schemas/pinned/ucp/2026-08-25/schemas/profile.json
+    sha256: 720a4e676bd4aaa5cbdcef2f89a4d0b776c4f0e141f1911da7514227ecb5c239
+    source_path: source/schemas/profile.json
+  - path: schemas/pinned/ucp/2026-08-25/services/shopping/rest.openapi.json
+    sha256: 75b73d5081f88c2e58dcfb4a87f5bf8b4eaafa130f27036fc020074d2b4b0252
+    source_path: source/services/shopping/rest.openapi.json
+    note: The complete schema tree under schemas/pinned/ucp/2026-08-25/schemas is required to resolve $ref chains.
+roles:
+  lab: platform
+  target: business
+transport: rest
+capabilities:
+  required:
+    - id: dev.ucp.shopping.checkout
+      description: Checkout capability advertised in the business profile.
+      discovery: "/.well-known/ucp ucp.capabilities has key dev.ucp.shopping.checkout"
+    - id: service:dev.ucp.shopping:rest
+      description: Shopping service with a REST transport binding and endpoint.
+      discovery: "ucp.services['dev.ucp.shopping'][transport=rest].endpoint present"
+  optional:
+    - id: dev.ucp.shopping.discount
+      description: Discount extension (discount codes, applied/rejected discounts).
+      discovery: "ucp.capabilities has key dev.ucp.shopping.discount"
+driver: ucp
+lab_decisions:
+  - "Idempotency-Key is required by the REST OpenAPI parameter definition, while the prose says operations SHOULD support idempotency; the lab asserts the replay/409-conflict contract only for targets that accept the header."
+  - "Business-outcome errors (out_of_stock, payment_failed) are HTTP 200 with a messages[] entry; protocol errors use the error_response envelope."
+  - "The Complete Checkout lost-response recovery follows the spec text: GET first, and only re-send the identical request with the same idempotency key if GET cannot establish the outcome."

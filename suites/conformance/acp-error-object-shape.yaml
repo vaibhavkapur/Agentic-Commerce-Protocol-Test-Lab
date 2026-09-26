@@ -1,0 +1,27 @@
+id: acp-error-object-shape
+title: Protocol-level errors use the Error object
+purpose: When no valid session can be returned (unknown item on create), the 4xx body must be an Error with type, code and message.
+classification: protocol_conformance
+profile: acp-checkout-2026-04-17
+role: agent
+requirement: LAB-ACP-ERR-001
+requires_capabilities: [checkout]
+preconditions: [fixture_reset]
+steps:
+  - id: create
+    action: create_checkout_session
+    with:
+      items: [{id: sku_does_not_exist, quantity: 1}]
+assertions:
+  - kind: status
+    step: create
+    in: [400, 404, 422]
+  - kind: schema
+    step: create
+    schema: acp:Error
+  - kind: field
+    step: create
+    path: $.type
+    equals: invalid_request
+evidence: [redacted_protocol_trace]
+cleanup: reset_fixture

@@ -1,0 +1,28 @@
+id: acp-api-version-required
+title: Requests without API-Version are rejected with supported_versions
+purpose: API-Version is a required header; a version-related Error must list the seller's supported versions.
+classification: protocol_conformance
+profile: acp-checkout-2026-04-17
+role: agent
+requirement: LAB-ACP-VER-001
+requires_capabilities: [checkout]
+preconditions: [fixture_reset]
+steps:
+  - id: create
+    action: create_checkout_session
+    with:
+      omit_headers: [API-Version]
+    intentionally_invalid: true
+assertions:
+  - kind: status
+    step: create
+    equals: 400
+  - kind: schema
+    step: create
+    schema: acp:Error
+  - kind: field
+    step: create
+    path: $.supported_versions
+    present: true
+evidence: [redacted_protocol_trace]
+cleanup: reset_fixture

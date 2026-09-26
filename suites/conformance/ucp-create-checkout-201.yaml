@@ -1,0 +1,37 @@
+id: ucp-create-checkout-201
+title: Create Checkout returns 201 with a schema-valid Checkout
+purpose: The Checkout object must carry the ucp envelope and the required fields (ucp, id, line_items, status, currency,
+  totals, links) with a native lifecycle status.
+classification: protocol_conformance
+profile: ucp-checkout-2026-08-25
+role: platform
+requirement: LAB-UCP-SESS-001
+requires_capabilities:
+- dev.ucp.shopping.checkout
+preconditions:
+- fixture_reset
+steps:
+- id: create
+  action: create_checkout_session
+  with:
+    items:
+    - id: sku_socks_best
+      quantity: 3
+assertions:
+- kind: status
+  step: create
+  equals: 201
+- kind: schema
+  step: create
+  schema: ucp:checkout
+- kind: field
+  step: create
+  path: $.status
+  in:
+  - incomplete
+  - ready_for_complete
+  - requires_escalation
+evidence:
+- redacted_protocol_trace
+- checkout_snapshot
+cleanup: reset_fixture

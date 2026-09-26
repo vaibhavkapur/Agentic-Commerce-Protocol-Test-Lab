@@ -1,0 +1,19 @@
+id: acp-pack
+version: 0.1.0
+description: All ACP cases.
+cases:
+- conformance/acp-api-version-required.yaml
+- conformance/acp-cancel-after-complete-refused.yaml
+- conformance/acp-complete-creates-order.yaml
+- conformance/acp-create-session-201.yaml
+- conformance/acp-discount-extension.yaml
+- conformance/acp-discovery-document.yaml
+- conformance/acp-error-object-shape.yaml
+- conformance/acp-get-session-schema.yaml
+- conformance/acp-idempotency-conflict.yaml
+- conformance/acp-idempotency-key-required.yaml
+- conformance/acp-idempotent-replay.yaml
+- robustness/acp-complete-request-dropped-before-delivery.yaml
+- robustness/acp-complete-response-lost-replay.yaml
+- robustness/acp-payment-declined-no-order.yaml
+- robustness/acp-stale-price-change-before-complete.yaml

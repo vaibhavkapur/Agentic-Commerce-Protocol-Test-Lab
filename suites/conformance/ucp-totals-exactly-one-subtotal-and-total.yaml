@@ -1,0 +1,27 @@
+id: ucp-totals-exactly-one-subtotal-and-total
+title: Checkout totals contain exactly one subtotal and one total entry
+purpose: totals MUST contain exactly one subtotal and one total entry; detail entries (tax, fulfillment, discount) may repeat. Also records whether total equals the sum of its parts as a lab observation.
+classification: protocol_conformance
+profile: ucp-checkout-2026-08-25
+role: platform
+requirement: LAB-UCP-TOT-001
+requires_capabilities: [dev.ucp.shopping.checkout]
+preconditions: [fixture_reset]
+steps:
+  - id: create
+    action: create_checkout_session
+    with:
+      items: [{id: sku_tee_blue_m, quantity: 1}, {id: sku_ebook_guide, quantity: 1}]
+assertions:
+  - kind: status
+    step: create
+    equals: 201
+  - kind: oracle
+    oracle: ucp_totals_exactly_one_subtotal_and_total
+    step: create
+  - kind: oracle
+    oracle: ucp_totals_consistent
+    step: create
+    description: lab observation — total equals subtotal + discount + fulfillment + tax + fee (not a normative clause)
+evidence: [redacted_protocol_trace, checkout_snapshot]
+cleanup: reset_fixture

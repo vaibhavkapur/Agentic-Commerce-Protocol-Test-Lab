@@ -1,0 +1,29 @@
+id: acp-discovery-document
+title: ACP discovery document is served and well-formed
+purpose: The seller publishes /.well-known/acp.json validating against DiscoveryResponse with protocol.name acp and the checkout service.
+classification: protocol_conformance
+profile: acp-checkout-2026-04-17
+role: agent
+requirement: LAB-ACP-DISC-001
+requires_capabilities: []
+preconditions: [fixture_reset]
+steps:
+  - id: discover
+    action: fetch_discovery
+assertions:
+  - kind: status
+    step: discover
+    equals: 200
+  - kind: schema
+    step: discover
+    schema: acp:DiscoveryResponse
+  - kind: field
+    step: discover
+    path: $.protocol.name
+    equals: acp
+  - kind: field
+    step: discover
+    path: $.protocol.version
+    equals: "2026-04-17"
+evidence: [redacted_protocol_trace, capability_snapshot]
+cleanup: none

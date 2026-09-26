@@ -1,0 +1,10 @@
+id: demo-broken-vs-corrected
+version: 0.1.0
+description: 'Demo A: lost completion response and duplicate delivery against the broken and corrected targets.'
+cases:
+- robustness/acp-complete-response-lost-replay.yaml
+- robustness/ucp-complete-response-lost-replay-same-key.yaml
+- robustness/ucp-complete-duplicate-delivery.yaml
+- robustness/acp-stale-price-change-before-complete.yaml
+- conformance/acp-idempotent-replay.yaml
+- conformance/acp-idempotency-conflict.yaml
