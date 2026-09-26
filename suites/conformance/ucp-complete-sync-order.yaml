@@ -1,0 +1,38 @@
+id: ucp-complete-sync-order
+title: Synchronous Complete Checkout returns completed with an order confirmation
+purpose: On synchronous success the status is completed and order.id / order.permalink_url are present; exactly one order exists at the business.
+classification: protocol_conformance
+profile: ucp-checkout-2026-08-25
+role: platform
+requirement: LAB-UCP-COMP-001
+requires_capabilities: [dev.ucp.shopping.checkout]
+preconditions: [fixture_reset, result_lookup_supported]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: complete
+    action: complete_checkout
+assertions:
+  - kind: status
+    step: complete
+    equals: 200
+  - kind: schema
+    step: complete
+    schema: ucp:checkout
+  - kind: field
+    step: complete
+    path: $.status
+    equals: completed
+  - kind: field
+    step: complete
+    path: $.order.id
+    present: true
+  - kind: field
+    step: complete
+    path: $.order.permalink_url
+    present: true
+  - kind: metric
+    metric: merchant_order_count_for_operation
+    equals: 1
+evidence: [redacted_protocol_trace, merchant_order_snapshot, payment_event_snapshot]
+cleanup: reset_fixture

@@ -1,0 +1,40 @@
+id: acp-complete-request-dropped-before-delivery
+title: ACP completion request dropped before reaching the merchant; retry must produce one order
+purpose: >
+  Distinguishes a request that never arrived from a response that was lost. The first attempt is
+  dropped at the boundary (upstream never contacted); the client's replay is the first request the
+  merchant sees. Exactly one order and one charge must result.
+classification: application_robustness
+profile: acp-checkout-2026-04-17
+role: agent
+invariant: one-order-and-one-charge-per-operation
+requires_capabilities: [checkout]
+preconditions: [fixture_reset, checkout_ready, result_lookup_supported]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: complete
+    action: complete_checkout
+    fault:
+      type: drop_request
+      trigger_point: before_request_delivery
+    expect_transport_error: true
+  - id: restart
+    action: restart_client_worker
+  - id: recover
+    action: recover_existing_operation
+assertions:
+  - kind: fault_fired
+    fault_step: complete
+  - kind: metric
+    metric: merchant_order_count_for_operation
+    equals: 1
+  - kind: metric
+    metric: settled_charge_count_for_operation
+    equals: 1
+  - kind: metric
+    metric: client_resolved_order_matches_merchant
+    equals: true
+evidence: [redacted_protocol_trace, merchant_order_snapshot, payment_event_snapshot, fault_log]
+cleanup: reset_fixture
+tags: [phase-1]

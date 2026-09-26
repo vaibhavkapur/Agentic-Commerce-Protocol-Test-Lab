@@ -1,0 +1,30 @@
+id: ap2-tampered-content-rejected
+title: Mandate payload mutated after signing is rejected
+purpose: The closed mandate's audience is altered after the user signed it; the key-binding signature must fail.
+classification: protocol_conformance
+profile: ap2-mandates-v0.2.0
+role: shopping_agent
+requirement: LAB-AP2-VER-002
+requires_capabilities: ["role:merchant", "mandate:mandate.checkout.1"]
+preconditions: [fixture_reset, issuer_ready]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: sign
+    action: obtain_checkout_jwt
+  - id: build
+    action: build_checkout_mandate
+    with: {variant: tampered_content}
+    intentionally_invalid: true
+  - id: present
+    action: present_checkout_mandate
+assertions:
+  - kind: verifier
+    step: present
+    result: Error
+    error: invalid_credential
+  - kind: oracle
+    oracle: ap2_receipt_reference_matches
+    step: present
+evidence: [redacted_protocol_trace, verifier_decision]
+cleanup: reset_fixture

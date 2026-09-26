@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://commerce-lab.local/schemas/scenario.schema.json",
+  "title": "Commerce Lab Scenario",
+  "description": "Strict schema for a single test case (plan §9). Action names are lab abstractions, not protocol methods.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "title", "purpose", "classification", "profile", "role", "steps", "assertions", "evidence"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,80}$" },
+    "title": { "type": "string", "minLength": 3 },
+    "purpose": { "type": "string", "minLength": 10 },
+    "classification": { "type": "string", "enum": ["protocol_conformance", "application_robustness"] },
+    "profile": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]+$" },
+    "role": { "type": "string", "enum": ["agent", "platform", "shopping_agent", "verifier_client"] },
+    "requirement": { "type": "string", "pattern": "^LAB-[A-Z0-9]+-[A-Z0-9]+-[0-9]{3}$" },
+    "invariant": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]+$" },
+    "requires_capabilities": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "preconditions": { "type": "array", "items": { "type": "string", "enum": ["fixture_reset", "checkout_ready", "result_lookup_supported", "registry_ready", "issuer_ready"] } },
+    "fixtures": { "type": "object", "additionalProperties": { "type": "string" } },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/step" }
+    },
+    "assertions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/assertion" }
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "enum": ["redacted_protocol_trace", "merchant_order_snapshot", "payment_event_snapshot", "checkout_snapshot", "fault_log", "capability_snapshot", "verifier_decision", "registry_snapshot", "idempotency_snapshot"] }
+    },
+    "cleanup": { "type": "string", "enum": ["reset_fixture", "none"], "default": "reset_fixture" },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "notes": { "type": "string" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "classification": { "const": "protocol_conformance" } } },
+      "then": { "required": ["requirement"] }
+    },
+    {
+      "if": { "properties": { "classification": { "const": "application_robustness" } } },
+      "then": { "required": ["invariant"] }
+    }
+  ],
+  "$defs": {
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "action"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
+        "action": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "with": { "type": "object" },
+        "fault": { "$ref": "#/$defs/fault" },
+        "expect_transport_error": { "type": "boolean", "default": false },
+        "intentionally_invalid": {
+          "type": "boolean",
+          "default": false,
+          "description": "Negative-test marker: the harness request is deliberately malformed and outgoing validation is skipped for it."
+        }
+      }
+    },
+    "fault": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "trigger_point"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["drop_response", "drop_request", "bounded_delay", "duplicate_delivery", "connection_interruption", "process_crash", "stale_price_change", "stock_change"]
+        },
+        "trigger_point": {
+          "type": "string",
+          "enum": ["before_request_delivery", "after_backend_commit_before_response", "during_response_streaming", "after_payment_submission_before_client_persistence", "during_worker_restart", "before_step"]
+        },
+        "delay_ms": { "type": "integer", "minimum": 0, "maximum": 5000 },
+        "copies": { "type": "integer", "minimum": 2, "maximum": 5 },
+        "sku": { "type": "string" },
+        "new_unit_amount": { "type": "integer", "minimum": 0 },
+        "new_stock": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "assertion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["metric", "status", "schema", "field", "header", "fault_fired", "verifier", "transport_error", "oracle"] },
+        "description": { "type": "string" },
+        "metric": { "type": "string" },
+        "oracle": { "type": "string" },
+        "step": { "type": "string" },
+        "fault_step": { "type": "string" },
+        "schema": { "type": "string" },
+        "path": { "type": "string" },
+        "header": { "type": "string" },
+        "equals": {},
+        "not_equals": {},
+        "in": { "type": "array" },
+        "gte": { "type": "number" },
+        "lte": { "type": "number" },
+        "present": { "type": "boolean" },
+        "result": { "type": "string" },
+        "error": { "type": "string" },
+        "policy_label": {
+          "type": "string",
+          "enum": ["normative", "application_policy"],
+          "description": "application_policy marks checks that come from the lab's declared trust policy rather than the pinned specification."
+        }
+      },
+      "allOf": [
+        { "if": { "properties": { "kind": { "const": "metric" } } }, "then": { "required": ["metric"] } },
+        { "if": { "properties": { "kind": { "const": "oracle" } } }, "then": { "required": ["oracle", "step"] } },
+        { "if": { "properties": { "kind": { "const": "status" } } }, "then": { "required": ["step"], "anyOf": [{ "required": ["equals"] }, { "required": ["in"] }] } },
+        { "if": { "properties": { "kind": { "const": "schema" } } }, "then": { "required": ["step", "schema"] } },
+        { "if": { "properties": { "kind": { "const": "field" } } }, "then": { "required": ["step", "path"] } },
+        { "if": { "properties": { "kind": { "const": "header" } } }, "then": { "required": ["step", "header"] } },
+        { "if": { "properties": { "kind": { "const": "fault_fired" } } }, "then": { "required": ["fault_step"] } },
+        { "if": { "properties": { "kind": { "const": "verifier" } } }, "then": { "required": ["step", "result"] } },
+        { "if": { "properties": { "kind": { "const": "transport_error" } } }, "then": { "required": ["step", "equals"] } }
+      ]
+    }
+  }
+}

@@ -1,0 +1,33 @@
+id: ucp-profile-discovery
+title: UCP business profile is served at /.well-known/ucp and declares the shopping REST service
+purpose: >
+  Demo C. The profile must validate against the business profile schema. The lab profile also
+  requires dev.ucp.shopping.checkout to be advertised; a target claiming this profile without it
+  FAILS at applicability rather than being skipped.
+classification: protocol_conformance
+profile: ucp-checkout-2026-08-25
+role: platform
+requirement: LAB-UCP-DISC-001
+requires_capabilities: [dev.ucp.shopping.checkout, "service:dev.ucp.shopping:rest"]
+preconditions: [fixture_reset]
+steps:
+  - id: discover
+    action: fetch_discovery
+assertions:
+  - kind: status
+    step: discover
+    equals: 200
+  - kind: schema
+    step: discover
+    schema: ucp:profile
+  - kind: field
+    step: discover
+    path: $.ucp.version
+    equals: "2026-08-25"
+  - kind: field
+    step: discover
+    path: $.ucp.services['dev.ucp.shopping'][0].transport
+    equals: rest
+evidence: [redacted_protocol_trace, capability_snapshot]
+cleanup: none
+tags: [demo-c]

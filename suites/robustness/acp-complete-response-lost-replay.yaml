@@ -1,0 +1,56 @@
+id: acp-complete-response-lost-replay
+title: ACP completion response lost after backend commit; client restarts and replays with the same key
+purpose: >
+  Demo A. The merchant commits the order and charge but the response is dropped at the network
+  boundary. The client worker restarts, finds the pending operation in its durable journal, and
+  re-sends the identical completion request with the same Idempotency-Key. Exactly one order and
+  exactly one settled charge must exist afterwards, and the client must resolve the same order id
+  the merchant holds. A deliberately broken merchant that ignores Idempotency-Key charges twice.
+classification: application_robustness
+profile: acp-checkout-2026-04-17
+role: agent
+invariant: one-order-and-one-charge-per-operation
+requires_capabilities: [checkout]
+preconditions: [fixture_reset, checkout_ready, result_lookup_supported]
+steps:
+  - id: create
+    action: create_checkout_session
+    with:
+      items: [{id: sku_tee_blue_m, quantity: 1}]
+  - id: complete
+    action: complete_checkout
+    with: {payment_token: tok_ok}
+    fault:
+      type: drop_response
+      trigger_point: after_backend_commit_before_response
+    expect_transport_error: true
+  - id: restart
+    action: restart_client_worker
+  - id: recover
+    action: recover_existing_operation
+    with: {policy: replay_same_key}
+assertions:
+  - kind: fault_fired
+    fault_step: complete
+  - kind: transport_error
+    step: complete
+    equals: true
+  - kind: metric
+    metric: merchant_order_count_for_operation
+    equals: 1
+  - kind: metric
+    metric: settled_charge_count_for_operation
+    equals: 1
+  - kind: metric
+    metric: client_resolved_order_matches_merchant
+    equals: true
+  - kind: status
+    step: recover
+    equals: 200
+  - kind: field
+    step: recover
+    path: $.status
+    equals: completed
+evidence: [redacted_protocol_trace, merchant_order_snapshot, payment_event_snapshot, fault_log, checkout_snapshot]
+cleanup: reset_fixture
+tags: [demo-a, phase-1]

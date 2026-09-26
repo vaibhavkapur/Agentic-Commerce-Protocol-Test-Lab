@@ -1,0 +1,33 @@
+id: acp-get-session-schema
+title: Retrieving a session returns the required CheckoutSession fields with a native status
+purpose: GET /checkout_sessions/{id} must return a schema-valid CheckoutSession whose status is one of the enumerated native values and whose id matches the created session.
+classification: protocol_conformance
+profile: acp-checkout-2026-04-17
+role: agent
+requirement: LAB-ACP-SESS-002
+requires_capabilities: [checkout]
+preconditions: [fixture_reset]
+steps:
+  - id: create
+    action: create_checkout_session
+    with:
+      buyer: null
+  - id: get
+    action: get_checkout_session
+assertions:
+  - kind: status
+    step: get
+    equals: 200
+  - kind: schema
+    step: get
+    schema: acp:CheckoutSession
+  - kind: field
+    step: get
+    path: $.status
+    equals: not_ready_for_payment
+  - kind: field
+    step: get
+    path: $.messages[?type=error].code
+    equals: missing
+evidence: [redacted_protocol_trace, checkout_snapshot]
+cleanup: reset_fixture

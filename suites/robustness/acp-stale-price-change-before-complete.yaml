@@ -1,0 +1,42 @@
+id: acp-stale-price-change-before-complete
+title: Price changes between quote and completion; no charge may exist without an order
+purpose: >
+  The merchant changes the item price after the session was quoted. Completing at the stale price
+  must not create an order, and — whatever the merchant decides about the order — it must never
+  charge the customer without creating one. A merchant that charges before validating the cart
+  leaves a settled charge with no order.
+classification: application_robustness
+profile: acp-checkout-2026-04-17
+role: agent
+invariant: no-charge-without-order
+requires_capabilities: [checkout]
+preconditions: [fixture_reset, checkout_ready, result_lookup_supported]
+steps:
+  - id: create
+    action: create_checkout_session
+    with:
+      items: [{id: sku_tee_blue_m, quantity: 1}]
+  - id: reprice
+    action: change_inventory
+    fault:
+      type: stale_price_change
+      trigger_point: before_step
+      sku: sku_tee_blue_m
+      new_unit_amount: 2900
+  - id: complete
+    action: complete_checkout
+assertions:
+  - kind: fault_fired
+    fault_step: reprice
+  - kind: metric
+    metric: merchant_order_count_for_operation
+    equals: 0
+  - kind: metric
+    metric: settled_charge_count_for_operation
+    equals: 0
+  - kind: metric
+    metric: merchant_checkout_status
+    not_equals: completed
+evidence: [redacted_protocol_trace, merchant_order_snapshot, payment_event_snapshot, fault_log, checkout_snapshot]
+cleanup: reset_fixture
+tags: [phase-1]

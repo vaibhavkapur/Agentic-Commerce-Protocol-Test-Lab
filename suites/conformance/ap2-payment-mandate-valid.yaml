@@ -1,0 +1,34 @@
+id: ap2-payment-mandate-valid
+title: Payment Mandate bound to the checkout hash and total is accepted by the credential provider
+purpose: transaction_id equals the checkout hash and payment_amount equals the checkout total; the receipt is signed and references the presentation.
+classification: protocol_conformance
+profile: ap2-mandates-v0.2.0
+role: shopping_agent
+requirement: LAB-AP2-PAY-001
+requires_capabilities: ["role:credential_provider", "mandate:mandate.payment.1"]
+preconditions: [fixture_reset, issuer_ready]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: sign
+    action: obtain_checkout_jwt
+  - id: build
+    action: build_payment_mandate
+    with: {variant: valid_direct}
+  - id: present
+    action: present_payment_mandate
+assertions:
+  - kind: verifier
+    step: present
+    result: Success
+  - kind: oracle
+    oracle: ap2_receipt_signature_valid
+    step: present
+  - kind: oracle
+    oracle: ap2_receipt_reference_matches
+    step: present
+  - kind: oracle
+    oracle: ap2_receipt_schema_valid
+    step: present
+evidence: [redacted_protocol_trace, verifier_decision]
+cleanup: reset_fixture

@@ -1,0 +1,12 @@
+id: local-merchant-misdeclared
+description: >
+  Claims the UCP checkout profile but its /.well-known/ucp profile does not advertise
+  dev.ucp.shopping.checkout. Demonstrates that a missing *required* capability is a FAIL,
+  not NOT_APPLICABLE.
+kind: local_reference
+revision: reference_targets.corrected_misdeclared@0.1.0
+factory: reference_targets:corrected_misdeclared
+profiles:
+  - ucp-checkout-2026-08-25
+observation:
+  kind: lab_fixture

@@ -1,0 +1,121 @@
+profile: tap-signed-requests-2025-10-28
+requirements:
+  - id: LAB-TAP-SIG-001
+    kind: normative
+    keyword: MUST
+    source:
+      document: RFC 9421 §3.2 (Verifying a Signature); cdn-proxy/README.md "Signature Components"
+      section: "Verification; components @authority, @path, created, keyId, alg"
+      quote: "Implements HTTP Message Signatures with components: @authority - Host header, @path - Request path, created, keyId, alg"
+      revision: 16d59bdf3f8a542bc538d0962edbb80ea30a02af
+    statement: A recognised agent's request with a valid RFC 9421 signature over @method, @authority, @path (and content-digest when a body is present) is accepted.
+    expected_behavior: 200 verified with the registered agent id; an independent RFC 9421 verifier agrees the signature is valid.
+    applicability: All merchant gateways claiming the profile.
+
+  - id: LAB-TAP-SIG-002
+    kind: normative
+    keyword: MUST
+    source:
+      document: cdn-proxy/README.md; merchant-backend/app/security/signature_verification.py
+      section: "How It Works step 3 (Fetches Key); verify_signature 'Unknown agent'"
+      quote: "Retrieves public key from Agent Registry using keyId"
+      revision: 16d59bdf3f8a542bc538d0962edbb80ea30a02af
+    statement: A signature whose keyid is not in the agent registry is rejected.
+    expected_behavior: 401 with reason unknown_key.
+    applicability: All merchant gateways.
+
+  - id: LAB-TAP-SIG-003
+    kind: normative
+    keyword: MUST
+    source:
+      document: merchant-backend/app/security/signature_verification.py; RFC 9421 §3.2.1 (created/expires)
+      section: "verify_signature timestamp validity"
+      quote: "if current_time < created: 'Signature created in the future'; if current_time > expires: 'Signature expired'"
+      revision: 16d59bdf3f8a542bc538d0962edbb80ea30a02af
+    statement: Signatures outside their created/expires window are rejected.
+    expected_behavior: expired → 401 expired; created in the future → 401 not_yet_valid.
+    applicability: All merchant gateways.
+
+  - id: LAB-TAP-SIG-004
+    kind: normative
+    keyword: MUST
+    source:
+      document: RFC 9421 §3.2 step 7 (signature base recomputation); RFC 9530 (Content-Digest)
+      section: "Verifying a Signature"
+      quote: "the verifier ... recreates the signature base ... and verifies the signature against it"
+      revision: 16d59bdf3f8a542bc538d0962edbb80ea30a02af
+    statement: Mutating a covered component after signing (the path, or the body behind content-digest) invalidates the signature.
+    expected_behavior: 401 signature_invalid or content_digest_mismatch; independent verifier also rejects.
+    applicability: All merchant gateways.
+
+  - id: LAB-TAP-SIG-005
+    kind: normative
+    keyword: MUST
+    source:
+      document: README.md
+      section: "Key Benefits › Context-Bound Security"
+      quote: "Every request from a trusted agent is cryptographically locked to a merchant's specific website ... an agent's authorization cannot be misused elsewhere."
+      revision: 16d59bdf3f8a542bc538d0962edbb80ea30a02af
+    statement: A signature bound to another merchant's authority is rejected, including when the caller asserts that authority through X-Forwarded-Host; @authority must come from the trusted boundary.
+    expected_behavior: 401 signature_invalid; authority_source is the boundary header, never x-forwarded-host.
+    applicability: All merchant gateways deployed behind a proxy boundary.
+
+  - id: LAB-TAP-CTX-001
+    kind: normative
+    keyword: MUST
+    source:
+      document: README.md
+      section: "The Solution › Confirm Transaction-Specific Authorization"
+      quote: "Ensure the agent is authorized for the specific action it is taking (browsing or payment) as the signature is bound to ... the specific operation being performed."
+      revision: 16d59bdf3f8a542bc538d0962edbb80ea30a02af
+    statement: A browsing-context signature (tag agent-browser-auth) is not accepted on the payment authorization endpoint.
+    expected_behavior: 401 context_mismatch.
+    applicability: Gateways exposing both browsing and payment endpoints.
+
+  - id: LAB-TAP-RPLY-001
+    kind: normative
+    keyword: MUST
+    source:
+      document: README.md
+      section: "Key Benefits › Protection Against Replay Attacks"
+      quote: "Each signature includes unique, time-sensitive elements that ensure every request is fresh and valid only for a single use."
+      revision: 16d59bdf3f8a542bc538d0962edbb80ea30a02af
+    statement: Re-sending an identical signed request (same keyid and nonce) within its validity window is rejected. Note the sample verifier code does not implement this; the README states it as a protocol property.
+    expected_behavior: first attempt 200 verified; identical second attempt 401 replay.
+    applicability: Gateways advertising policy replay_protection; otherwise NOT_APPLICABLE.
+
+  - id: LAB-TAP-ALG-001
+    kind: application_policy
+    keyword: policy
+    source:
+      document: manifests/profiles/tap-signed-requests-2025-10-28.yaml
+      section: "lab_decisions (algorithm allowlist)"
+      quote: "Allowed: ed25519, ecdsa-p256-sha256"
+      revision: lab
+    statement: Signatures declaring an algorithm outside the lab allowlist (for example hmac-sha256) are rejected before key resolution.
+    expected_behavior: 401 unsupported_algorithm.
+    applicability: Lab trust policy; the sample allows ed25519 and rsa-pss-sha256.
+
+  - id: LAB-TAP-KEY-001
+    kind: application_policy
+    keyword: policy
+    source:
+      document: agent-registry/README.md
+      section: "Multi-key support and key rotation"
+      quote: "The Agent Registry supports multiple keys per agent, enabling key rotation"
+      revision: 16d59bdf3f8a542bc538d0962edbb80ea30a02af
+    statement: Under the lab trust policy a revoked key is rejected immediately, and a rotated-out key is accepted only within the declared grace period.
+    expected_behavior: revoked → 401 key_revoked; rotated-out within grace → 200 verified; after grace → 401 key_rotated_out.
+    applicability: Lab trust policy, not a protocol clause.
+
+  - id: LAB-TAP-CD-001
+    kind: application_policy
+    keyword: policy
+    source:
+      document: manifests/profiles/tap-signed-requests-2025-10-28.yaml
+      section: "lab_decisions (content-digest coverage)"
+      quote: "Requests with a body must cover content-digest (RFC 9530 sha-256)."
+      revision: lab
+    statement: A signed request with a body that does not cover content-digest is rejected.
+    expected_behavior: 401 coverage_insufficient.
+    applicability: Lab trust policy.

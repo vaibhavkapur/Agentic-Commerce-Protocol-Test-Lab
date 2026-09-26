@@ -1,0 +1,28 @@
+id: ap2-unsupported-algorithm-rejected
+title: Issuer JWT declaring an algorithm outside the allowlist is rejected
+purpose: Algorithm agility must be constrained; a header alg outside ES256/EdDSA is refused before any signature check.
+classification: protocol_conformance
+profile: ap2-mandates-v0.2.0
+role: shopping_agent
+requirement: LAB-AP2-VER-002
+requires_capabilities: ["role:merchant", "mandate:mandate.checkout.1"]
+preconditions: [fixture_reset, issuer_ready]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: sign
+    action: obtain_checkout_jwt
+  - id: build
+    action: build_checkout_mandate
+    with: {variant: unsupported_algorithm}
+    intentionally_invalid: true
+  - id: present
+    action: present_checkout_mandate
+assertions:
+  - kind: verifier
+    step: present
+    result: Error
+    error: invalid_credential
+    policy_label: application_policy
+evidence: [redacted_protocol_trace, verifier_decision]
+cleanup: reset_fixture

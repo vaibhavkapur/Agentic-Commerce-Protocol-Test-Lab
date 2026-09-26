@@ -1,0 +1,29 @@
+# Network-mode fixtures: a local reference merchant plus the lab fault proxy.
+# In-process runs (commerce-lab run --target local-merchant-*) do not need this file.
+#
+#   docker compose up --build
+#   commerce-lab run --suite checkout-core --target network-merchant-example
+#
+# network-merchant-example has no observation channel, so order/charge metrics
+# are INCONCLUSIVE. To observe, point a custom target at
+# http://localhost:8000/_lab/observe.
+
+services:
+  merchant-corrected:
+    build: .
+    command: ["commerce-lab", "serve-target", "--target", "local-merchant-corrected", "--host", "0.0.0.0", "--port", "8000", "--seed", "42"]
+    ports:
+      - "8000:8000"
+
+  merchant-broken:
+    build: .
+    command: ["commerce-lab", "serve-target", "--target", "local-merchant-broken", "--host", "0.0.0.0", "--port", "8000", "--seed", "42"]
+    profiles: ["broken"]
+
+  fault-proxy:
+    build: .
+    command: ["commerce-lab", "proxy", "--upstream", "http://merchant-corrected:8000", "--host", "0.0.0.0", "--port", "8080"]
+    ports:
+      - "8080:8080"
+    depends_on:
+      - merchant-corrected

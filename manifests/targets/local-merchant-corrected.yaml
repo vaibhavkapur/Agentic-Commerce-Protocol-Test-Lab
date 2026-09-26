@@ -1,0 +1,21 @@
+id: local-merchant-corrected
+description: >
+  Corrected reference implementation: strict Idempotency-Key handling with replay and conflict
+  detection, check-then-charge completion with a processor-side idempotency key, conformant error
+  bodies, boundary-derived @authority, nonce replay cache, and checkout-bound AP2 verification.
+kind: local_reference
+revision: reference_targets.corrected@0.1.0
+factory: reference_targets:corrected
+profiles:
+  - acp-checkout-2026-04-17
+  - ucp-checkout-2026-08-25
+  - ap2-mandates-v0.2.0
+  - tap-signed-requests-2025-10-28
+observation:
+  kind: lab_fixture
+declared_guarantees:
+  - one-order-and-one-charge-per-operation
+  - no-charge-without-order
+  - coherent-cancellation
+  - price-integrity-at-completion
+  - authority-bound-to-checkout

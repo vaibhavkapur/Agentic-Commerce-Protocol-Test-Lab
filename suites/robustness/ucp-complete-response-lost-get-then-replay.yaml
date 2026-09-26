@@ -1,0 +1,46 @@
+id: ucp-complete-response-lost-get-then-replay
+title: UCP completion response lost; client follows the spec's GET-first recovery
+purpose: >
+  After a lost Complete Checkout response the platform SHOULD use Get Checkout to establish the
+  state before re-sending anything. The checkout shows completed with an order, so no retry is
+  sent and the order/charge counts stay at one regardless of the business's idempotency handling.
+  Contrast with ucp-complete-response-lost-replay-same-key.
+classification: application_robustness
+profile: ucp-checkout-2026-08-25
+role: platform
+invariant: one-order-and-one-charge-per-operation
+requires_capabilities: [dev.ucp.shopping.checkout]
+preconditions: [fixture_reset, checkout_ready, result_lookup_supported]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: complete
+    action: complete_checkout
+    fault:
+      type: drop_response
+      trigger_point: after_backend_commit_before_response
+    expect_transport_error: true
+  - id: restart
+    action: restart_client_worker
+  - id: recover
+    action: recover_existing_operation
+    with: {policy: get_then_replay}
+assertions:
+  - kind: fault_fired
+    fault_step: complete
+  - kind: metric
+    metric: merchant_order_count_for_operation
+    equals: 1
+  - kind: metric
+    metric: settled_charge_count_for_operation
+    equals: 1
+  - kind: metric
+    metric: client_resolved_order_matches_merchant
+    equals: true
+  - kind: field
+    step: recover
+    path: $.status
+    equals: completed
+evidence: [redacted_protocol_trace, merchant_order_snapshot, payment_event_snapshot, fault_log]
+cleanup: reset_fixture
+tags: [phase-1]

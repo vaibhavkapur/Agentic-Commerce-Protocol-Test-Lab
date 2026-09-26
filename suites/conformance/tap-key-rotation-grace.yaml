@@ -1,0 +1,34 @@
+id: tap-key-rotation-grace
+title: Rotated-out key is honoured within the grace window and refused afterwards
+purpose: "Lab trust policy for key rotation: after rotation the old key stays valid for the declared grace period, then is rejected as key_rotated_out."
+classification: protocol_conformance
+profile: tap-signed-requests-2025-10-28
+role: agent
+requirement: LAB-TAP-KEY-001
+requires_capabilities: [signed_request_verification]
+preconditions: [fixture_reset, registry_ready]
+steps:
+  - id: rotate
+    action: rotate_agent_key
+  - id: within_grace
+    action: send_signed_request
+    with: {variant: rotated_out_key}
+  - id: advance
+    action: advance_clock
+    with: {seconds: 600}
+  - id: after_grace
+    action: send_signed_request
+    with: {variant: rotated_out_key}
+    intentionally_invalid: true
+assertions:
+  - kind: verifier
+    step: within_grace
+    result: verified
+    policy_label: application_policy
+  - kind: verifier
+    step: after_grace
+    result: rejected
+    error: key_rotated_out
+    policy_label: application_policy
+evidence: [redacted_protocol_trace, verifier_decision, registry_snapshot]
+cleanup: reset_fixture

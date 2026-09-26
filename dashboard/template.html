@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Commerce Lab Report</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --bg:#0f1115; --panel:#171a21; --line:#2a2f3a; --fg:#e6e6e6; --muted:#9aa3b2; --pass:#2e9e5b; --fail:#d64545; --na:#5b6b8a; --inc:#d9a026; --err:#a349c9; --run:#3b4252; }
+  * { box-sizing: border-box; }
+  body { margin:0; font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background:var(--bg); color:var(--fg); }
+  header { padding:18px 24px; border-bottom:1px solid var(--line); background:var(--panel); }
+  h1 { margin:0 0 6px; font-size:20px; }
+  h2 { font-size:15px; margin:18px 0 8px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+  main { padding:18px 24px 60px; max-width:1400px; }
+  .meta { display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:8px 24px; font-size:13px; color:var(--muted); }
+  .meta b { color:var(--fg); font-weight:600; }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12.5px; }
+  .cards { display:flex; gap:10px; flex-wrap:wrap; margin:12px 0; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px 14px; min-width:120px; }
+  .card .n { font-size:22px; font-weight:700; }
+  .card .l { font-size:12px; color:var(--muted); }
+  .badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11.5px; font-weight:700; color:#fff; letter-spacing:.02em; }
+  .PASS{background:var(--pass)} .FAIL{background:var(--fail)} .NOT_APPLICABLE{background:var(--na)} .INCONCLUSIVE{background:var(--inc);color:#111} .HARNESS_ERROR{background:var(--err)} .NOT_RUN{background:var(--run)} .MISSING{background:#333}
+  table { width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font-size:12px; color:var(--muted); font-weight:600; }
+  tr.case { cursor:pointer; }
+  tr.case:hover { background:#1d212b; }
+  tr.detail td { background:#121520; }
+  .controls { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:8px 0 12px; }
+  select, input, button { background:var(--panel); color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:6px 8px; font-size:13px; }
+  .muted { color:var(--muted); }
+  .kv { display:grid; grid-template-columns: 180px 1fr; gap:4px 12px; margin:6px 0; }
+  details { margin:6px 0; }
+  summary { cursor:pointer; color:var(--muted); }
+  pre { background:#0b0d12; border:1px solid var(--line); border-radius:6px; padding:8px; overflow:auto; max-height:360px; margin:6px 0; }
+  .warn { background:#3a2e10; border:1px solid #7a5d12; color:#ffd77a; padding:8px 12px; border-radius:6px; margin:10px 0; }
+  .ok { background:#10301c; border:1px solid #1f6b3a; color:#a8f0c0; padding:8px 12px; border-radius:6px; margin:10px 0; }
+  .small { font-size:12px; }
+  .chip { display:inline-block; border:1px solid var(--line); border-radius:6px; padding:1px 6px; margin:1px 2px; font-size:11.5px; color:var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">Commerce Lab Report</h1>
+  <div class="meta" id="meta"></div>
+</header>
+<main>
+  <div id="integrity"></div>
+  <h2>Summary</h2>
+  <div class="cards" id="cards"></div>
+  <div class="muted small" id="passrate"></div>
+  <div id="byclass"></div>
+  <div id="compare"></div>
+  <h2>Cases</h2>
+  <div class="controls">
+    <label>Result <select id="fResult"><option value="">all</option></select></label>
+    <label>Classification <select id="fClass"><option value="">all</option></select></label>
+    <label>Profile <select id="fProfile"><option value="">all</option></select></label>
+    <input id="fText" placeholder="search id / requirement / reason" size="36">
+    <span class="muted small" id="count"></span>
+  </div>
+  <table id="cases"><thead><tr><th>Result</th><th>Case</th><th>Class</th><th>Profile</th><th>Requirement</th><th>Reason</th><th>ms</th></tr></thead><tbody></tbody></table>
+  <h2>Capability snapshots</h2>
+  <div id="caps"></div>
+  <h2>Fault events</h2>
+  <div id="faults"></div>
+</main>
+<script id="bundle" type="application/json">/*__BUNDLE__*/</script>
+<script id="comparison" type="application/json">/*__COMPARE__*/</script>
+<script>
+(function(){
+  const B = JSON.parse(document.getElementById('bundle').textContent || 'null');
+  const C = JSON.parse(document.getElementById('comparison').textContent || 'null');
+  if (!B) { document.getElementById('title').textContent = 'No run bundle embedded'; return; }
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const badge = r => `<span class="badge ${esc(r)}">${esc(r)}</span>`;
+  const run = B.run, S = B.summary;
+  document.getElementById('title').textContent = `Commerce Lab — ${run.suite_id} @ ${run.target_id}`;
+  const profiles = Object.values(B.profiles || {});
+  document.getElementById('meta').innerHTML = [
+    `<div><b>Run</b> <span class="mono">${esc(run.id)}</span> · ${esc(run.run_status)}</div>`,
+    `<div><b>Target</b> ${esc(run.target_id)} <span class="mono">${esc(run.target_revision)}</span></div>`,
+    `<div><b>Suite</b> ${esc(run.suite_id)} v${esc(run.suite_version)} · seed ${esc(run.fixture_seed)}</div>`,
+    `<div><b>Spec manifest</b> <span class="mono">${esc(run.spec_manifest_digest)}</span></div>`,
+    `<div><b>Mode</b> ${esc(run.environment && run.environment.mode)} · frozen clock ${esc(run.environment && run.environment.frozen_clock)}</div>`,
+    `<div><b>Started</b> ${esc(run.started_at)} · <b>finished</b> ${esc(run.finished_at)}</div>`,
+    ...profiles.map(p => `<div><b>${esc(p.protocol.toUpperCase())}</b> ${esc(p.id)} — ${esc(p.status)} · rev <span class="mono">${esc((p.specification||{}).revision||'').slice(0,12)}</span></div>`)
+  ].join('');
+  // schema integrity
+  const integ = B.schema_integrity || {};
+  const bad = Object.entries(integ).flatMap(([pid, rows]) => rows.filter(r => !r.ok).map(r => `${pid}: ${r.path}`));
+  document.getElementById('integrity').innerHTML = bad.length
+    ? `<div class="warn">Pinned schema checksum mismatch: ${bad.map(esc).join(', ')}. Results were computed against modified schemas.</div>`
+    : `<div class="ok small">All pinned schema checksums verified (${Object.values(integ).reduce((n, r) => n + r.length, 0)} files).</div>`;
+  // cards
+  const order = ['PASS','FAIL','INCONCLUSIVE','HARNESS_ERROR','NOT_APPLICABLE','NOT_RUN'];
+  document.getElementById('cards').innerHTML = order.map(k => `<div class="card"><div class="n">${S.counts[k]||0}</div><div class="l">${badge(k)}</div></div>`).join('')
+    + `<div class="card"><div class="n">${S.total}</div><div class="l">total cases</div></div>`;
+  const pr = S.pass_rate == null ? 'n/a' : (S.pass_rate*100).toFixed(1) + '%';
+  document.getElementById('passrate').textContent = `Pass rate ${pr} over ${S.pass_rate_denominator} executed, applicable cases (PASS + FAIL). Not applicable, not run, inconclusive and harness errors are excluded from the rate and shown alongside it.`;
+  document.getElementById('byclass').innerHTML = '<table><thead><tr><th>Classification</th>' + order.map(k => `<th>${k}</th>`).join('') + '</tr></thead><tbody>'
+    + Object.entries(S.by_classification || {}).map(([k, v]) => `<tr><td>${esc(k)}</td>${order.map(o => `<td>${v[o]||0}</td>`).join('')}</tr>`).join('') + '</tbody></table>';
+  // compare
+  if (C) {
+    const rows = (C.rows||[]).filter(r => r.change !== 'same');
+    document.getElementById('compare').innerHTML = `<h2>Comparison</h2>
+      <div class="${C.comparable ? 'ok' : 'warn'} small">baseline <span class="mono">${esc(C.baseline.run_id)}</span> (${esc(C.baseline.target_id)}) vs candidate <span class="mono">${esc(C.candidate.run_id)}</span> (${esc(C.candidate.target_id)}) · comparable: ${C.comparable} ${(C.notes||[]).map(esc).join(' ')}</div>
+      <table><thead><tr><th>Case</th><th>Baseline</th><th>Candidate</th><th>Change</th><th>Candidate reason</th></tr></thead><tbody>
+      ${rows.map(r => `<tr><td class="mono">${esc(r.case_id)}</td><td>${badge(r.baseline)}</td><td>${badge(r.candidate)}</td><td>${esc(r.change)}</td><td class="small">${esc(r.candidate_reason)}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">no differences</td></tr>'}
+      </tbody></table>`;
+  }
+  // filters
+  const cases = B.cases;
+  const fill = (id, vals) => { const s = document.getElementById(id); [...new Set(vals)].sort().forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; s.appendChild(o); }); };
+  fill('fResult', cases.map(c => c.result)); fill('fClass', cases.map(c => c.classification)); fill('fProfile', cases.map(c => c.profile));
+  const evidenceById = Object.fromEntries((B.evidence||[]).map(e => [e.reference, e]));
+  const faultsByCase = {}; (B.fault_events||[]).forEach(f => (faultsByCase[f.case_id] = faultsByCase[f.case_id] || []).push(f));
+  const pre = o => `<pre class="mono">${esc(typeof o === 'string' ? o : JSON.stringify(o, null, 2))}</pre>`;
+  function detail(c) {
+    const src = c.requirement_source || {};
+    const s = src.source || {};
+    const asserts = (c.assertions||[]).map(a => `<tr><td>${badge(a.result)}</td><td>${esc(a.description)}</td><td class="mono small">${esc(JSON.stringify(a.expected))}</td><td class="mono small">${esc(JSON.stringify(a.observed))}</td><td class="small muted">${esc(a.detail)}</td></tr>`).join('');
+    const steps = (c.steps||[]).filter(st => st.step_id).map(st => `<details><summary>step <b>${esc(st.step_id)}</b> · ${esc(st.action)} ${st.fault_id ? '· fault ' + esc(st.fault_id) : ''} ${st.transport_error ? '· <span style="color:#ffb3b3">' + esc(st.transport_error) + '</span>' : ''} ${st.response ? '· HTTP ' + esc(st.response.status) : ''} ${st.intentionally_invalid ? '· <span class="chip">intentionally invalid</span>' : ''}</summary>
+        ${st.request ? '<div class="small muted">request</div>' + pre(st.request) : ''}${st.response ? '<div class="small muted">response</div>' + pre(st.response) : ''}${Object.keys(st.observations||{}).length ? '<div class="small muted">observations</div>' + pre(st.observations) : ''}${(st.notes||[]).length ? '<div class="small muted">notes: ' + esc(st.notes.join('; ')) + '</div>' : ''}</details>`).join('');
+    const faults = (faultsByCase[c.case_id]||[]).map(f => `<div class="small"><span class="chip">${esc(f.fault_type)}</span> at <b>${esc(f.trigger_point)}</b> · ${esc(f.fired_at)} · ${esc(f.affected_operation)} <span class="mono muted">${esc(JSON.stringify(f.confirmation_evidence))}</span></div>`).join('') || '<div class="small muted">no faults fired</div>';
+    const ev = (c.evidence_references||[]).map(r => { const e = evidenceById[r]; return `<details><summary class="mono">${esc(r)}${e ? ' · ' + esc(e.kind) + ' · digest ' + esc((e.unredacted_digest||'').slice(0,23)) : ''}</summary>${e ? pre(e.payload) : '<div class="muted small">not embedded</div>'}</details>`; }).join('');
+    return `<div class="kv small">
+        <div class="muted">purpose</div><div>${esc(c.purpose)}</div>
+        <div class="muted">${esc(src.kind || 'source')}</div><div>${esc(src.id||'')} ${s.document ? '— <span class="mono">' + esc(s.document) + '</span> › ' + esc(s.section) : ''}${s.quote ? '<div class="muted">“' + esc(s.quote) + '”</div>' : ''}${src.statement ? '<div>' + esc(src.statement) + '</div>' : ''}</div>
+        <div class="muted">reason</div><div>${esc(c.reason || '—')}</div>
+        <div class="muted">capabilities</div><div class="mono">${esc(JSON.stringify((c.capability_snapshot||{}).capabilities||[]))}</div>
+      </div>
+      <table><thead><tr><th>Assertion</th><th>Description</th><th>Expected</th><th>Observed</th><th>Detail</th></tr></thead><tbody>${asserts || '<tr><td colspan="5" class="muted">no assertions evaluated</td></tr>'}</tbody></table>
+      <h2>Steps and messages</h2>${steps || '<div class="muted small">no steps executed</div>'}
+      <h2>Faults</h2>${faults}
+      <h2>Evidence</h2>${ev || '<div class="muted small">none</div>'}`;
+  }
+  function render() {
+    const fr = document.getElementById('fResult').value, fc = document.getElementById('fClass').value, fp = document.getElementById('fProfile').value, ft = document.getElementById('fText').value.toLowerCase();
+    const rows = cases.filter(c => (!fr || c.result === fr) && (!fc || c.classification === fc) && (!fp || c.profile === fp) && (!ft || (c.case_id + ' ' + (c.requirement_id||'') + ' ' + (c.reason||'')).toLowerCase().includes(ft)));
+    document.getElementById('count').textContent = `${rows.length} of ${cases.length} shown`;
+    const tb = document.querySelector('#cases tbody');
+    tb.innerHTML = rows.map((c, i) => `<tr class="case" data-i="${i}"><td>${badge(c.result)}</td><td class="mono">${esc(c.case_id)}</td><td class="small">${esc(c.classification)}</td><td class="small">${esc(c.profile)}</td><td class="mono small">${esc(c.requirement_id || c.requirement_source && c.requirement_source.id || '')}</td><td class="small">${esc((c.reason||'').slice(0, 220))}</td><td class="small">${c.duration_ms}</td></tr>`).join('');
+    tb.querySelectorAll('tr.case').forEach(tr => tr.addEventListener('click', () => {
+      const next = tr.nextElementSibling;
+      if (next && next.classList.contains('detail')) { next.remove(); return; }
+      const d = document.createElement('tr'); d.className = 'detail'; d.innerHTML = `<td colspan="7">${detail(rows[+tr.dataset.i])}</td>`; tr.after(d);
+    }));
+  }
+  ['fResult','fClass','fProfile'].forEach(id => document.getElementById(id).addEventListener('change', render));
+  document.getElementById('fText').addEventListener('input', render);
+  render();
+  document.getElementById('caps').innerHTML = Object.entries(B.capability_snapshots||{}).map(([pid, s]) => `<details><summary>${esc(pid)} — ${(s.capabilities||[]).length} advertised</summary>${pre({...s, raw: undefined})}</details>`).join('') || '<div class="muted small">none</div>';
+  document.getElementById('faults').innerHTML = (B.fault_events||[]).length ? '<table><thead><tr><th>Case</th><th>Fault</th><th>Type</th><th>Trigger</th><th>Fired</th><th>Operation</th><th>Confirmation</th></tr></thead><tbody>'
+    + B.fault_events.map(f => `<tr><td class="mono small">${esc(f.case_id)}</td><td class="mono small">${esc(f.fault_id)}</td><td>${esc(f.fault_type)}</td><td>${esc(f.trigger_point)}</td><td class="small">${esc(f.fired_at)}</td><td class="mono small">${esc(f.affected_operation)}</td><td class="mono small">${esc(JSON.stringify(f.confirmation_evidence))}</td></tr>`).join('') + '</tbody></table>' : '<div class="muted small">no faults fired in this run</div>';
+})();
+</script>
+</body>
+</html>

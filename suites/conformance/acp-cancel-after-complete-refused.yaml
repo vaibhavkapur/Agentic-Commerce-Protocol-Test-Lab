@@ -1,0 +1,37 @@
+id: acp-cancel-after-complete-refused
+title: Cancelling a completed session is refused and the order survives
+purpose: Cancel applies only to sessions not already completed or canceled; after completion it returns an Error and the session and order remain.
+classification: protocol_conformance
+profile: acp-checkout-2026-04-17
+role: agent
+requirement: LAB-ACP-CANC-001
+requires_capabilities: [checkout]
+preconditions: [fixture_reset, result_lookup_supported]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: complete
+    action: complete_checkout
+  - id: cancel
+    action: cancel_checkout_session
+  - id: get
+    action: get_checkout_session
+assertions:
+  - kind: status
+    step: cancel
+    in: [400, 409, 422]
+  - kind: schema
+    step: cancel
+    schema: acp:Error
+  - kind: field
+    step: get
+    path: $.status
+    equals: completed
+  - kind: metric
+    metric: merchant_order_count_for_operation
+    equals: 1
+  - kind: metric
+    metric: merchant_checkout_status
+    equals: completed
+evidence: [redacted_protocol_trace, merchant_order_snapshot, checkout_snapshot]
+cleanup: reset_fixture

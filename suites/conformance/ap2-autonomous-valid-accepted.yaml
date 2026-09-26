@@ -1,0 +1,31 @@
+id: ap2-autonomous-valid-accepted
+title: Agent-signed closed mandate satisfying the user's open-mandate constraints is accepted
+purpose: Autonomous mode. The user signed an open mandate (cnf = agent key, allowed merchant and line items); the agent closes it for a matching checkout.
+classification: protocol_conformance
+profile: ap2-mandates-v0.2.0
+role: shopping_agent
+requirement: LAB-AP2-VER-004
+requires_capabilities: ["role:merchant", "mandate:mandate.checkout.open.1"]
+preconditions: [fixture_reset, issuer_ready, result_lookup_supported]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: sign
+    action: obtain_checkout_jwt
+  - id: build
+    action: build_checkout_mandate
+    with: {variant: valid_autonomous}
+  - id: present
+    action: present_checkout_mandate
+assertions:
+  - kind: verifier
+    step: present
+    result: Success
+  - kind: oracle
+    oracle: ap2_receipt_signature_valid
+    step: present
+  - kind: metric
+    metric: merchant_order_count_for_operation
+    equals: 1
+evidence: [redacted_protocol_trace, verifier_decision, merchant_order_snapshot]
+cleanup: reset_fixture

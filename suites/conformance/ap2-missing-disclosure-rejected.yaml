@@ -1,0 +1,30 @@
+id: ap2-missing-disclosure-rejected
+title: Closed mandate withholding the checkout_jwt disclosure is rejected
+purpose: The merchant cannot verify checkout_hash without the disclosed checkout_jwt; the presentation must be rejected as invalid_credential.
+classification: protocol_conformance
+profile: ap2-mandates-v0.2.0
+role: shopping_agent
+requirement: LAB-AP2-VER-001
+requires_capabilities: ["role:merchant", "mandate:mandate.checkout.1"]
+preconditions: [fixture_reset, issuer_ready]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: sign
+    action: obtain_checkout_jwt
+  - id: build
+    action: build_checkout_mandate
+    with: {variant: missing_disclosure}
+    intentionally_invalid: true
+  - id: present
+    action: present_checkout_mandate
+assertions:
+  - kind: verifier
+    step: present
+    result: Error
+    error: invalid_credential
+  - kind: metric
+    metric: merchant_order_count_for_operation
+    equals: 0
+evidence: [redacted_protocol_trace, verifier_decision]
+cleanup: reset_fixture

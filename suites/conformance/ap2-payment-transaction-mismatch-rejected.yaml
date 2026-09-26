@@ -1,0 +1,33 @@
+id: ap2-payment-transaction-mismatch-rejected
+title: Payment Mandate whose transaction_id references another checkout is rejected
+purpose: The credential provider must verify the payment is scoped to the checkout being paid for.
+classification: protocol_conformance
+profile: ap2-mandates-v0.2.0
+role: shopping_agent
+requirement: LAB-AP2-PAY-001
+requires_capabilities: ["role:credential_provider", "mandate:mandate.payment.1"]
+preconditions: [fixture_reset, issuer_ready]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: create_other
+    action: create_other_checkout_session
+  - id: sign
+    action: obtain_checkout_jwt
+  - id: sign_other
+    action: obtain_checkout_jwt
+    with: {for: other}
+  - id: build
+    action: build_payment_mandate
+    with: {variant: transaction_mismatch}
+    intentionally_invalid: true
+  - id: present
+    action: present_payment_mandate
+assertions:
+  - kind: verifier
+    step: present
+    result: Error
+    error: invalid_mandate
+evidence: [redacted_protocol_trace, verifier_decision]
+cleanup: reset_fixture
+tags: [demo-b]

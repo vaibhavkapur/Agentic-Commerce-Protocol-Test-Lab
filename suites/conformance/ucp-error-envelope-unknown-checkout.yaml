@@ -1,0 +1,26 @@
+id: ucp-error-envelope-unknown-checkout
+title: Protocol errors use the error_response envelope
+purpose: A GET for an unknown checkout id must return a 4xx with ucp.status error and at least one message carrying code and content.
+classification: protocol_conformance
+profile: ucp-checkout-2026-08-25
+role: platform
+requirement: LAB-UCP-ERR-001
+requires_capabilities: [dev.ucp.shopping.checkout]
+preconditions: [fixture_reset]
+steps:
+  - id: get
+    action: get_checkout_session
+    with: {checkout_id: chk_does_not_exist}
+assertions:
+  - kind: status
+    step: get
+    equals: 404
+  - kind: schema
+    step: get
+    schema: ucp:error_response
+  - kind: field
+    step: get
+    path: $.messages[0].code
+    equals: not_found
+evidence: [redacted_protocol_trace]
+cleanup: none

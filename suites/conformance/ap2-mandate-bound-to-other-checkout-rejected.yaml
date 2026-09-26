@@ -1,0 +1,47 @@
+id: ap2-mandate-bound-to-other-checkout-rejected
+title: Authentic mandate for a different checkout is rejected as invalid_mandate
+purpose: >
+  Demo B (identity versus purchase authority). The chain is genuine and well-formed, but its
+  checkout_jwt is another checkout. The merchant must reject with invalid_mandate and create no
+  order. A verifier that only authenticates the chain accepts it.
+classification: protocol_conformance
+profile: ap2-mandates-v0.2.0
+role: shopping_agent
+requirement: LAB-AP2-VER-001
+requires_capabilities: ["role:merchant", "mandate:mandate.checkout.1"]
+preconditions: [fixture_reset, issuer_ready, result_lookup_supported]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: create_other
+    action: create_other_checkout_session
+  - id: sign
+    action: obtain_checkout_jwt
+  - id: sign_other
+    action: obtain_checkout_jwt
+    with: {for: other}
+  - id: build
+    action: build_checkout_mandate
+    with: {variant: bound_to_other_checkout}
+    intentionally_invalid: true
+  - id: present
+    action: present_checkout_mandate
+assertions:
+  - kind: verifier
+    step: present
+    result: Error
+    error: invalid_mandate
+  - kind: oracle
+    oracle: ap2_checkout_binding_independent
+    step: present
+    equals: false
+    description: independent oracle confirms the mandate is bound to a different checkout id
+  - kind: oracle
+    oracle: ap2_receipt_signature_valid
+    step: present
+  - kind: metric
+    metric: merchant_order_count_for_operation
+    equals: 0
+evidence: [redacted_protocol_trace, verifier_decision, merchant_order_snapshot]
+cleanup: reset_fixture
+tags: [demo-b]

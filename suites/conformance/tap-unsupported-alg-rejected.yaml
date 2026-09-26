@@ -1,0 +1,25 @@
+id: tap-unsupported-alg-rejected
+title: Signature declaring hmac-sha256 is rejected by the algorithm allowlist
+purpose: Lab trust policy restricts algorithms to ed25519 and ecdsa-p256-sha256; symmetric algorithms are refused before key resolution.
+classification: protocol_conformance
+profile: tap-signed-requests-2025-10-28
+role: agent
+requirement: LAB-TAP-ALG-001
+requires_capabilities: [signed_request_verification]
+preconditions: [fixture_reset, registry_ready]
+steps:
+  - id: send
+    action: send_signed_request
+    with: {variant: unsupported_alg}
+    intentionally_invalid: true
+assertions:
+  - kind: status
+    step: send
+    equals: 401
+  - kind: verifier
+    step: send
+    result: rejected
+    error: unsupported_algorithm
+    policy_label: application_policy
+evidence: [redacted_protocol_trace, verifier_decision]
+cleanup: reset_fixture

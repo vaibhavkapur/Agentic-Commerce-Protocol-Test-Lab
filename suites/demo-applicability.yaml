@@ -1,0 +1,8 @@
+id: demo-applicability
+version: 0.1.0
+description: "Demo C: optional capability absent \u2192 NOT_APPLICABLE; required capability absent \u2192 FAIL."
+cases:
+- conformance/acp-discount-extension.yaml
+- conformance/ucp-discount-capability.yaml
+- conformance/ucp-profile-discovery.yaml
+- conformance/ucp-create-checkout-201.yaml

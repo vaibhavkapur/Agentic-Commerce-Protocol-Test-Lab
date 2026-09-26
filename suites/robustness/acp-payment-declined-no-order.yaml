@@ -1,0 +1,38 @@
+id: acp-payment-declined-no-order
+title: Declined payment leaves no order and no settled charge
+purpose: >
+  A declined instrument must be reported to the agent as a business outcome (session with a
+  payment_declined message) and must leave the merchant with zero orders and zero settled charges.
+classification: application_robustness
+profile: acp-checkout-2026-04-17
+role: agent
+invariant: no-charge-without-order
+requires_capabilities: [checkout]
+preconditions: [fixture_reset, checkout_ready, result_lookup_supported]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: complete
+    action: complete_checkout
+    with: {payment_token: tok_decline}
+assertions:
+  - kind: status
+    step: complete
+    equals: 200
+  - kind: field
+    step: complete
+    path: $.messages[?type=error].code
+    equals: payment_declined
+  - kind: field
+    step: complete
+    path: $.status
+    not_equals: completed
+  - kind: metric
+    metric: merchant_order_count_for_operation
+    equals: 0
+  - kind: metric
+    metric: settled_charge_count_for_operation
+    equals: 0
+evidence: [redacted_protocol_trace, merchant_order_snapshot, payment_event_snapshot]
+cleanup: reset_fixture
+tags: [phase-1]

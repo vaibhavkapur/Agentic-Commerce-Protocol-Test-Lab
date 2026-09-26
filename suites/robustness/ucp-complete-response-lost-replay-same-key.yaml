@@ -1,0 +1,48 @@
+id: ucp-complete-response-lost-replay-same-key
+title: UCP completion response lost; client re-sends the identical request with the same Idempotency-Key
+purpose: >
+  The UCP spec permits re-sending the identical Complete Checkout request with the same idempotency
+  key when the outcome cannot otherwise be established. This case exercises that path directly
+  (no GET probe) so that a business which does not honour Idempotency-Key is shown to place a
+  second charge.
+classification: application_robustness
+profile: ucp-checkout-2026-08-25
+role: platform
+invariant: one-order-and-one-charge-per-operation
+requires_capabilities: [dev.ucp.shopping.checkout]
+preconditions: [fixture_reset, checkout_ready, result_lookup_supported]
+steps:
+  - id: create
+    action: create_checkout_session
+    with:
+      items: [{id: sku_socks_best, quantity: 2}]
+  - id: complete
+    action: complete_checkout
+    fault:
+      type: drop_response
+      trigger_point: after_backend_commit_before_response
+    expect_transport_error: true
+  - id: restart
+    action: restart_client_worker
+  - id: recover
+    action: recover_existing_operation
+    with: {policy: replay_same_key}
+assertions:
+  - kind: fault_fired
+    fault_step: complete
+  - kind: metric
+    metric: merchant_order_count_for_operation
+    equals: 1
+  - kind: metric
+    metric: settled_charge_count_for_operation
+    equals: 1
+  - kind: metric
+    metric: client_resolved_order_matches_merchant
+    equals: true
+  - kind: field
+    step: recover
+    path: $.status
+    equals: completed
+evidence: [redacted_protocol_trace, merchant_order_snapshot, payment_event_snapshot, fault_log]
+cleanup: reset_fixture
+tags: [demo-a, phase-1]

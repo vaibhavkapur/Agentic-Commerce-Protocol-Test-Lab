@@ -1,0 +1,33 @@
+id: ucp-discount-capability
+title: Discount capability applies a code and reports a negative discount total
+purpose: Demo C. Applicable only when dev.ucp.shopping.discount is advertised; otherwise NOT_APPLICABLE.
+classification: protocol_conformance
+profile: ucp-checkout-2026-08-25
+role: platform
+requirement: LAB-UCP-DISCNT-001
+requires_capabilities: [dev.ucp.shopping.checkout, dev.ucp.shopping.discount]
+preconditions: [fixture_reset]
+steps:
+  - id: create
+    action: create_checkout_session
+    with:
+      items: [{id: sku_tee_blue_m, quantity: 2}]
+      discount_codes: [SAVE10]
+assertions:
+  - kind: status
+    step: create
+    equals: 201
+  - kind: schema
+    step: create
+    schema: ucp:checkout
+  - kind: field
+    step: create
+    path: $.discounts.applied[0].code
+    equals: SAVE10
+  - kind: field
+    step: create
+    path: $.totals[?type=discount].amount
+    lte: -1
+evidence: [redacted_protocol_trace, capability_snapshot]
+cleanup: reset_fixture
+tags: [demo-c]

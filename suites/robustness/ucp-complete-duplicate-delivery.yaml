@@ -1,0 +1,39 @@
+id: ucp-complete-duplicate-delivery
+title: UCP completion request delivered twice by the network
+purpose: >
+  The proxy forwards the same signed completion request twice (duplicate delivery). The business
+  must treat the second copy as a replay and not place a second order or charge.
+classification: application_robustness
+profile: ucp-checkout-2026-08-25
+role: platform
+invariant: one-order-and-one-charge-per-operation
+requires_capabilities: [dev.ucp.shopping.checkout]
+preconditions: [fixture_reset, checkout_ready, result_lookup_supported]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: complete
+    action: complete_checkout
+    fault:
+      type: duplicate_delivery
+      trigger_point: before_request_delivery
+      copies: 2
+assertions:
+  - kind: fault_fired
+    fault_step: complete
+  - kind: status
+    step: complete
+    equals: 200
+  - kind: field
+    step: complete
+    path: $.status
+    equals: completed
+  - kind: metric
+    metric: merchant_order_count_for_operation
+    equals: 1
+  - kind: metric
+    metric: settled_charge_count_for_operation
+    equals: 1
+evidence: [redacted_protocol_trace, merchant_order_snapshot, payment_event_snapshot, fault_log]
+cleanup: reset_fixture
+tags: [phase-1]

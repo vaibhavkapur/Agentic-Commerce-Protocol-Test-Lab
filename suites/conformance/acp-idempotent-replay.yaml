@@ -1,0 +1,39 @@
+id: acp-idempotent-replay
+title: Identical completion re-sent with the same Idempotency-Key is replayed, not re-executed
+purpose: The second identical complete request returns the cached response with Idempotent-Replayed true and no new order or charge.
+classification: protocol_conformance
+profile: acp-checkout-2026-04-17
+role: agent
+requirement: LAB-ACP-IDEM-002
+requires_capabilities: [checkout]
+preconditions: [fixture_reset, result_lookup_supported]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: complete
+    action: complete_checkout
+  - id: retry
+    action: retry_last_operation
+assertions:
+  - kind: status
+    step: complete
+    equals: 200
+  - kind: status
+    step: retry
+    equals: 200
+  - kind: header
+    step: retry
+    header: Idempotent-Replayed
+    equals: "true"
+  - kind: field
+    step: retry
+    path: $.status
+    equals: completed
+  - kind: metric
+    metric: merchant_order_count_for_operation
+    equals: 1
+  - kind: metric
+    metric: settled_charge_count_for_operation
+    equals: 1
+evidence: [redacted_protocol_trace, merchant_order_snapshot, payment_event_snapshot, idempotency_snapshot]
+cleanup: reset_fixture

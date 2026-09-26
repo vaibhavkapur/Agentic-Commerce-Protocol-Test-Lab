@@ -1,0 +1,33 @@
+id: ap2-autonomous-constraint-violation-rejected
+title: Authentic agent-signed mandate for items outside the user's constraints is rejected
+purpose: >
+  The agent is genuine and the chain verifies, but the checkout contains an item the open
+  mandate's line_items constraint does not allow. The merchant must reject with invalid_mandate.
+classification: protocol_conformance
+profile: ap2-mandates-v0.2.0
+role: shopping_agent
+requirement: LAB-AP2-VER-004
+requires_capabilities: ["role:merchant", "mandate:mandate.checkout.open.1"]
+preconditions: [fixture_reset, issuer_ready, result_lookup_supported]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: sign
+    action: obtain_checkout_jwt
+  - id: build
+    action: build_checkout_mandate
+    with: {variant: constraint_violation}
+    intentionally_invalid: true
+  - id: present
+    action: present_checkout_mandate
+assertions:
+  - kind: verifier
+    step: present
+    result: Error
+    error: invalid_mandate
+  - kind: metric
+    metric: merchant_order_count_for_operation
+    equals: 0
+evidence: [redacted_protocol_trace, verifier_decision, merchant_order_snapshot]
+cleanup: reset_fixture
+tags: [demo-b]

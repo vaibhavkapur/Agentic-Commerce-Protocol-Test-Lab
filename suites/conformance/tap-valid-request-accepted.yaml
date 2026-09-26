@@ -1,0 +1,33 @@
+id: tap-valid-request-accepted
+title: Recognised agent with a valid RFC 9421 signature is accepted
+purpose: >
+  Demo B (identity half). The gateway resolves the key from the registry, rebuilds the signature
+  base over @method/@authority/@path/content-digest, and verifies. An independent RFC 9421
+  implementation must reach the same verdict.
+classification: protocol_conformance
+profile: tap-signed-requests-2025-10-28
+role: agent
+requirement: LAB-TAP-SIG-001
+requires_capabilities: [signed_request_verification, "tag:agent-payer-auth", "alg:ed25519"]
+preconditions: [fixture_reset, registry_ready]
+steps:
+  - id: send
+    action: send_signed_request
+    with: {variant: valid}
+assertions:
+  - kind: status
+    step: send
+    equals: 200
+  - kind: verifier
+    step: send
+    result: verified
+  - kind: oracle
+    oracle: tap_verdict_matches_independent
+    step: send
+  - kind: field
+    step: send
+    path: $.agent_id
+    equals: agent_lab_shopper_1
+evidence: [redacted_protocol_trace, verifier_decision, registry_snapshot]
+cleanup: reset_fixture
+tags: [demo-b]

@@ -1,0 +1,27 @@
+id: ap2-unknown-issuer-rejected
+title: Chain rooted in an untrusted issuer is rejected
+purpose: The user credential at the root of the chain is signed by an issuer the merchant does not trust.
+classification: protocol_conformance
+profile: ap2-mandates-v0.2.0
+role: shopping_agent
+requirement: LAB-AP2-VER-002
+requires_capabilities: ["role:merchant", "mandate:mandate.checkout.1"]
+preconditions: [fixture_reset, issuer_ready]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: sign
+    action: obtain_checkout_jwt
+  - id: build
+    action: build_checkout_mandate
+    with: {variant: unknown_issuer}
+    intentionally_invalid: true
+  - id: present
+    action: present_checkout_mandate
+assertions:
+  - kind: verifier
+    step: present
+    result: Error
+    error: invalid_credential
+evidence: [redacted_protocol_trace, verifier_decision]
+cleanup: reset_fixture

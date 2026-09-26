@@ -1,0 +1,10 @@
+id: demo-identity-vs-authority
+version: 0.1.0
+description: 'Demo B: TAP authenticates the agent request; AP2 rejects authorization bound to a different checkout.'
+cases:
+- conformance/tap-valid-request-accepted.yaml
+- conformance/tap-forwarded-host-spoof-rejected.yaml
+- conformance/ap2-valid-direct-mandate-accepted.yaml
+- conformance/ap2-mandate-bound-to-other-checkout-rejected.yaml
+- conformance/ap2-autonomous-constraint-violation-rejected.yaml
+- conformance/ap2-payment-transaction-mismatch-rejected.yaml

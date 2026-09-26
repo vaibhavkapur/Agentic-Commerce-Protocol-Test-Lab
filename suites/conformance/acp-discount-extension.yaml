@@ -1,0 +1,44 @@
+id: acp-discount-extension
+title: Discount extension applies valid codes and rejects invalid ones
+purpose: >
+  Demo C. Applicable only when the seller advertises the discount extension. A valid code appears in
+  discounts.applied with a discount total; an invalid code appears in discounts.rejected with a
+  DiscountErrorCode. Sellers without the extension are NOT_APPLICABLE, not failing.
+classification: protocol_conformance
+profile: acp-checkout-2026-04-17
+role: agent
+requirement: LAB-ACP-DISCNT-001
+requires_capabilities: [checkout, "extension:discount"]
+preconditions: [fixture_reset]
+steps:
+  - id: create
+    action: create_checkout_session
+    with:
+      items: [{id: sku_tee_blue_m, quantity: 2}]
+      discount_codes: [SAVE10, BOGUS99]
+assertions:
+  - kind: status
+    step: create
+    equals: 201
+  - kind: schema
+    step: create
+    schema: acp:CheckoutSession
+  - kind: field
+    step: create
+    path: $.discounts.applied[0].code
+    equals: SAVE10
+  - kind: field
+    step: create
+    path: $.discounts.rejected[0].reason
+    equals: discount_code_invalid
+  - kind: field
+    step: create
+    path: $.totals[?type=discount].amount
+    equals: 500
+  - kind: field
+    step: create
+    path: $.capabilities.extensions[0].name
+    equals: discount
+evidence: [redacted_protocol_trace, capability_snapshot]
+cleanup: reset_fixture
+tags: [demo-c]

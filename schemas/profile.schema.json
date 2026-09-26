@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://commerce-lab.local/schemas/profile.schema.json",
+  "title": "Commerce Lab Protocol Profile",
+  "description": "Version and requirements registry entry for one supported protocol profile (plan §7).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "protocol", "release", "status", "specification", "schemas", "roles", "transport", "capabilities", "driver"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]+$" },
+    "protocol": { "type": "string", "enum": ["acp", "ucp", "ap2", "tap"] },
+    "release": { "type": "string" },
+    "status": { "type": "string", "enum": ["released_snapshot", "tagged_release", "reference_sample", "draft"] },
+    "description": { "type": "string" },
+    "specification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "repository", "revision"],
+      "properties": {
+        "url": { "type": "string", "format": "uri" },
+        "repository": { "type": "string", "format": "uri" },
+        "revision": { "type": "string" },
+        "tag": { "type": "string" },
+        "retrieved_on": { "type": "string" }
+      }
+    },
+    "schemas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": { "type": "string" },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "source_path": { "type": "string" },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "reference_implementation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repository": { "type": "string" },
+        "revision": { "type": "string" },
+        "note": { "type": "string" }
+      }
+    },
+    "sdk": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "name": { "type": "string" }, "version": { "type": "string" }, "language": { "type": "string" } }
+    },
+    "roles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lab", "target"],
+      "properties": { "lab": { "type": "string" }, "target": { "type": "string" } }
+    },
+    "transport": { "type": "string", "enum": ["rest", "http-signed", "sd-jwt-presentation"] },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "optional"],
+      "properties": {
+        "required": { "type": "array", "items": { "$ref": "#/$defs/capability" } },
+        "optional": { "type": "array", "items": { "$ref": "#/$defs/capability" } }
+      }
+    },
+    "driver": { "type": "string" },
+    "lab_decisions": {
+      "type": "array",
+      "description": "Explicit decisions the lab made where the specification leaves behavior open, or where the lab deliberately narrows the profile.",
+      "items": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "discovery"],
+      "properties": {
+        "id": { "type": "string" },
+        "description": { "type": "string" },
+        "discovery": { "type": "string", "description": "How the driver detects the capability in the target's capability snapshot." }
+      }
+    }
+  }
+}

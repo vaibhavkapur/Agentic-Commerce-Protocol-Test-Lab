@@ -1,0 +1,35 @@
+id: acp-create-session-201
+title: Creating a checkout session returns 201 with an authoritative CheckoutSession
+purpose: POST /checkout_sessions MUST return 201 and a body carrying every required CheckoutSession field with a native status value.
+classification: protocol_conformance
+profile: acp-checkout-2026-04-17
+role: agent
+requirement: LAB-ACP-SESS-001
+requires_capabilities: [checkout]
+preconditions: [fixture_reset]
+steps:
+  - id: create
+    action: create_checkout_session
+    with:
+      items: [{id: sku_tee_blue_m, quantity: 2}, {id: sku_socks_best, quantity: 1}]
+assertions:
+  - kind: status
+    step: create
+    equals: 201
+  - kind: schema
+    step: create
+    schema: acp:CheckoutSession
+  - kind: field
+    step: create
+    path: $.status
+    in: [ready_for_payment, not_ready_for_payment]
+  - kind: field
+    step: create
+    path: $.line_items[0].quantity
+    equals: 2
+  - kind: header
+    step: create
+    header: Idempotency-Key
+    present: true
+evidence: [redacted_protocol_trace, checkout_snapshot]
+cleanup: reset_fixture

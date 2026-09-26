@@ -1,0 +1,38 @@
+id: tap-forwarded-host-spoof-rejected
+title: Signature for another merchant's authority is rejected even when X-Forwarded-Host asserts it
+purpose: >
+  Canonicalization at the proxy boundary. The agent signs @authority for other-merchant.example
+  and sends the request to this merchant with a caller-supplied X-Forwarded-Host claiming that
+  authority. The verifier must use the authority the trusted boundary observed; a verifier that
+  trusts the forwarded header accepts a signature over the wrong merchant context.
+classification: protocol_conformance
+profile: tap-signed-requests-2025-10-28
+role: agent
+requirement: LAB-TAP-SIG-005
+requires_capabilities: [signed_request_verification]
+preconditions: [fixture_reset, registry_ready]
+steps:
+  - id: send
+    action: send_signed_request
+    with: {variant: forwarded_host_spoof}
+    intentionally_invalid: true
+assertions:
+  - kind: status
+    step: send
+    equals: 401
+  - kind: verifier
+    step: send
+    result: rejected
+    error: signature_invalid
+  - kind: oracle
+    oracle: tap_signature_independently_valid
+    step: send
+    equals: false
+    description: independent verifier over the authority actually addressed (target.lab) rejects the signature
+  - kind: field
+    step: send
+    path: $.authority_source
+    not_equals: "x-forwarded-host (caller-supplied; broken)"
+evidence: [redacted_protocol_trace, verifier_decision]
+cleanup: reset_fixture
+tags: [demo-b]

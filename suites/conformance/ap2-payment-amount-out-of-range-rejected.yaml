@@ -1,0 +1,27 @@
+id: ap2-payment-amount-out-of-range-rejected
+title: Closed Payment Mandate exceeding the open mandate's amount_range is rejected
+purpose: payment_amount MUST be within the amount_range constraint; here max is one minor unit below the checkout total.
+classification: protocol_conformance
+profile: ap2-mandates-v0.2.0
+role: shopping_agent
+requirement: LAB-AP2-PAY-002
+requires_capabilities: ["role:credential_provider", "mandate:mandate.payment.open.1"]
+preconditions: [fixture_reset, issuer_ready]
+steps:
+  - id: create
+    action: create_checkout_session
+  - id: sign
+    action: obtain_checkout_jwt
+  - id: build
+    action: build_payment_mandate
+    with: {variant: amount_out_of_range}
+    intentionally_invalid: true
+  - id: present
+    action: present_payment_mandate
+assertions:
+  - kind: verifier
+    step: present
+    result: Error
+    error: invalid_mandate
+evidence: [redacted_protocol_trace, verifier_decision]
+cleanup: reset_fixture
