@@ -1,5 +1,7 @@
 # Failure and recovery demonstrations
 
+[Documentation home](index.md)
+
 These are the four demos from the development plan. Commands assume the package is installed and the working directory is the repository root.
 
 ## Demo A — broken versus corrected checkout

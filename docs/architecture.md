@@ -1,5 +1,7 @@
 # Architecture
 
+[Documentation home](index.md)
+
 The lab is a versioned test harness, not a general distributed test platform. Drivers format protocol messages. Assertions decide whether the observed behaviour met a requirement. Faults, fixtures, and reports stay independent so a harness bug is not recorded as a target failure.
 
 ```text

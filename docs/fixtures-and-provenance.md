@@ -1,5 +1,7 @@
 # Fixtures and provenance
 
+[Documentation home](index.md)
+
 Every profile manifest records the specification URL, repository revision, schema path, SHA-256 checksum, retrieval date, and lab decisions. `commerce-lab validate` recomputes those checksums.
 
 ## Pinned specifications

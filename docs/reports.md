@@ -1,5 +1,7 @@
 # Reports
 
+[Documentation home](index.md)
+
 Each run writes a self-contained directory under `runs/<run-id>/`:
 
 | File | Contents |
@@ -9,7 +11,8 @@ Each run writes a self-contained directory under `runs/<run-id>/`:
 | `junit.xml` | CI-oriented export |
 | `report.html` | Single-file browser viewer (`dashboard/template.html` with the bundle embedded) |
 | `evidence/*.json` | One redacted blob per reference |
-| `lab.sqlite` | Shared SQLite file for `test_runs`, `case_results`, `protocol_events`, `fault_events` |
+
+The shared index is `runs/lab.sqlite`, one level above the individual run directories. It stores `test_runs`, `case_results`, `protocol_events`, and `fault_events`. `--runs-dir` changes the root for both the database and run directories.
 
 Regenerate a format:
 
