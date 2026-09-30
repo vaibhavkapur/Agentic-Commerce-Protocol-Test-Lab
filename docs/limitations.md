@@ -1,5 +1,7 @@
 # Limitations
 
+[Documentation home](index.md)
+
 This lab is a bounded, local test suite. It is not a certification authority and it does not claim that an implementation “supports UCP/ACP/AP2/TAP” in general.
 
 ## What the initial suite does not cover

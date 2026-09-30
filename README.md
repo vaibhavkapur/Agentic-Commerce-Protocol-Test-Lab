@@ -2,7 +2,9 @@
 
 A local interoperability and failure-testing toolkit for agentic commerce implementations. Loads an explicit protocol/version profile, drives a local target, injects named faults, and reports which requirement or application invariant failed.
 
-> **[Read the full documentation](docs/architecture.md)**
+> **[Read the full documentation](docs/index.md)**
+
+Built with Python, versioned manifests, and self-contained HTML/JUnit reports. The implemented control interface is the CLI.
 
 ## Getting Started
 
@@ -19,6 +21,8 @@ commerce-lab run --suite checkout-core --target local-merchant-corrected --seed 
 
 Open `runs/<run-id>/report.html` in a browser. This is an independent test suite, not an official certification service.
 
+See [Getting Started](docs/getting-started.md) for prerequisites, cloning, configuration, and verification.
+
 ## Quick Example
 
 ```bash
@@ -34,3 +38,5 @@ commerce-lab run --suite demo-identity-vs-authority --target local-merchant-corr
 commerce-lab run --suite demo-applicability --target local-merchant-minimal --seed 42
 commerce-lab run --suite demo-applicability --target local-merchant-misdeclared --seed 42
 ```
+
+The broken and misdeclared targets intentionally produce nonzero exits. Run those commands separately so expected failures do not prevent the remaining demos. See [CLI Reference](docs/cli-reference.md) for exit codes and [Reports](docs/reports.md) for result meanings.
